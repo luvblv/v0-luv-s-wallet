@@ -12,18 +12,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
-import { CalendarIcon, CreditCard, Check, X } from "lucide-react"
+import { CalendarIcon, CreditCard, Check, X, Smartphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
+import { BillingHistory } from "@/components/billing-history"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function ProfileForm() {
   const { userName, setUserName } = useUser()
-  const [name, setName] = useState(userName)
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [dob, setDob] = useState<Date>()
-  const [paymentMethod, setPaymentMethod] = useState("credit")
+  const [occupation, setOccupation] = useState<string>("")
+  const [primaryInterest, setPrimaryInterest] = useState<string>("")
+  const [paymentMethod, setPaymentMethod] = useState("card")
   const [cardNumber, setCardNumber] = useState("")
   const [cardName, setCardName] = useState("")
   const [cardExpiry, setCardExpiry] = useState("")
@@ -35,8 +40,17 @@ export function ProfileForm() {
   // Simulate fetching user data
   useEffect(() => {
     // In a real app, this would be an API call to get user profile
+    const nameParts = userName.split(" ")
+    if (nameParts.length > 0) {
+      setFirstName(nameParts[0])
+      if (nameParts.length > 1) {
+        setLastName(nameParts.slice(1).join(" "))
+      }
+    }
     setEmail("user@example.com")
-  }, [])
+    setOccupation("employee") // Default value
+    setPrimaryInterest("budgeting") // Default value
+  }, [userName])
 
   const handlePersonalInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,7 +61,8 @@ export function ProfileForm() {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Update the user name in context
-      setUserName(name)
+      const fullName = `${firstName} ${lastName}`.trim()
+      setUserName(fullName)
 
       // Show success message
       setIsSaved(true)
@@ -141,14 +156,51 @@ export function ProfileForm() {
           </CardHeader>
           <form onSubmit={handlePersonalInfoSubmit}>
             <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="occupation">What best describes you</Label>
+                <Select value={occupation} onValueChange={setOccupation}>
+                  <SelectTrigger id="occupation" className="w-full">
+                    <SelectValue placeholder="Select an option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="employee">Employee</SelectItem>
+                    <SelectItem value="freelance">Freelance</SelectItem>
+                    <SelectItem value="founder">Founder/Small Business Owner</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="primary-interest">What is your primary interest</Label>
+                <Select value={primaryInterest} onValueChange={setPrimaryInterest}>
+                  <SelectTrigger id="primary-interest" className="w-full">
+                    <SelectValue placeholder="Select an option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="saving">Saving</SelectItem>
+                    <SelectItem value="budgeting">Budgeting</SelectItem>
+                    <SelectItem value="debt">Handling Debt</SelectItem>
+                    <SelectItem value="networth">Building Net Worth</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -209,24 +261,24 @@ export function ProfileForm() {
                 className="grid grid-cols-1 sm:grid-cols-3 gap-4"
               >
                 <div>
-                  <RadioGroupItem value="credit" id="credit" className="peer sr-only" />
+                  <RadioGroupItem value="card" id="card" className="peer sr-only" />
                   <Label
-                    htmlFor="credit"
+                    htmlFor="card"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                   >
                     <CreditCard className="mb-3 h-6 w-6" />
-                    Credit Card
+                    Credit/Debit Card
                   </Label>
                 </div>
 
                 <div>
-                  <RadioGroupItem value="debit" id="debit" className="peer sr-only" />
+                  <RadioGroupItem value="apple" id="apple" className="peer sr-only" />
                   <Label
-                    htmlFor="debit"
+                    htmlFor="apple"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                   >
-                    <CreditCard className="mb-3 h-6 w-6" />
-                    Debit Card
+                    <Smartphone className="mb-3 h-6 w-6" />
+                    Apple Pay
                   </Label>
                 </div>
 
@@ -242,7 +294,7 @@ export function ProfileForm() {
                 </div>
               </RadioGroup>
 
-              {(paymentMethod === "credit" || paymentMethod === "debit") && (
+              {paymentMethod === "card" && (
                 <div className="space-y-4 mt-4">
                   <div className="space-y-2">
                     <Label htmlFor="card-number">Card Number</Label>
@@ -279,6 +331,21 @@ export function ProfileForm() {
                       <Input id="cvc" placeholder="123" value={cardCvc} onChange={(e) => setCardCvc(e.target.value)} />
                     </div>
                   </div>
+                </div>
+              )}
+
+              {paymentMethod === "apple" && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-center mb-4">
+                    <Smartphone className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground mb-2">
+                    To use Apple Pay, you'll need to add your card to Apple Wallet on your iOS device.
+                  </p>
+                  <p className="text-center text-sm text-muted-foreground">
+                    When you complete your purchase, you'll be prompted to authorize the payment with Face ID, Touch ID,
+                    or your passcode.
+                  </p>
                 </div>
               )}
 
@@ -448,9 +515,7 @@ export function ProfileForm() {
             <Button variant="outline" className="text-red-500 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto">
               Cancel Subscription
             </Button>
-            <Button variant="outline" className="w-full sm:w-auto">
-              Billing History
-            </Button>
+            <BillingHistory />
           </CardFooter>
         </Card>
       </TabsContent>
