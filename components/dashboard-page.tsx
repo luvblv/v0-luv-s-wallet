@@ -9,7 +9,7 @@ import { AccountSummary } from "@/components/account-summary"
 import { FinancialGoals } from "@/components/financial-goals"
 import { AddTransactionForm } from "@/components/add-transaction-form"
 import { Button } from "@/components/ui/button"
-import { Plus, Info, Eye, EyeOff, ExternalLink } from "lucide-react"
+import { Plus, Info, Eye, EyeOff, ExternalLink, BanknoteIcon as Bank } from "lucide-react"
 import { LoansOverview } from "@/components/loans-overview"
 import { SavingsOverview } from "@/components/savings-overview"
 import { formatCurrency } from "@/lib/utils"
@@ -26,6 +26,7 @@ import {
   type Loan,
   type SavingsAccount,
 } from "@/lib/net-worth"
+import Link from "next/link"
 
 // Initial sample data for accounts, loans, and savings
 const initialAccounts = [
@@ -251,16 +252,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container py-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <Button onClick={() => setShowAddTransaction(!showAddTransaction)}>
+    <div className="container py-4 sm:py-6 px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
+        <Button onClick={() => setShowAddTransaction(!showAddTransaction)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Add Transaction
         </Button>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <TimePeriodFilter
           selectedPeriod={selectedTimePeriod}
           dateRange={dateRange}
@@ -269,25 +270,46 @@ export default function DashboardPage() {
         />
       </div>
 
+      {accounts.length === 0 && (
+        <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex-shrink-0 bg-white p-3 rounded-full">
+                <Bank className="h-8 w-8 text-blue-500" />
+              </div>
+              <div className="flex-grow text-center sm:text-left">
+                <h3 className="text-lg font-medium mb-1">Connect Your Accounts</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Get started by connecting your bank accounts or importing your financial data
+                </p>
+                <Button asChild>
+                  <Link href="/connect-accounts">Connect Accounts</Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {showAddTransaction && (
         <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Add New Transaction</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Add New Transaction</CardTitle>
             <CardDescription>Record a new expense or income</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
             <AddTransactionForm onComplete={() => setShowAddTransaction(false)} />
           </CardContent>
         </Card>
       )}
 
       {/* Net Worth Card - With chart next to values */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
+      <Card className="mb-4 sm:mb-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
-              <h3 className="text-xl text-gray-600 font-medium">Net Worth</h3>
-              <Info className="h-5 w-5 text-blue-500 ml-2" />
+              <h3 className="text-lg sm:text-xl text-gray-600 font-medium">Net Worth</h3>
+              <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 ml-2" />
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" onClick={() => setHideNetWorth(!hideNetWorth)} className="h-8 w-8">
@@ -299,18 +321,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Left side - Net Worth Value and Change */}
             <div>
-              <div className="mb-6">
-                <h2 className="text-5xl font-bold flex items-center">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-3xl sm:text-5xl font-bold flex items-center">
                   ${hideNetWorth ? "••••••" : formatCurrency(currentNetWorth)}
                 </h2>
               </div>
 
-              <div className="mb-6">
-                <h3 className="text-xl text-gray-600 font-medium mb-1">{getPeriodLabel()} Change</h3>
-                <p className={`text-2xl font-bold ${periodChange.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
+              <div className="mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl text-gray-600 font-medium mb-1">{getPeriodLabel()} Change</h3>
+                <p
+                  className={`text-xl sm:text-2xl font-bold ${periodChange.amount >= 0 ? "text-green-600" : "text-red-600"}`}
+                >
                   {periodChange.amount >= 0 ? "+" : "-"}${formatCurrency(Math.abs(periodChange.amount))} (
                   {periodChange.percentage}%)
                 </p>
@@ -343,50 +367,50 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${formatCurrency(summaryData.balance)}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.balance)}</div>
             <p className="text-xs text-muted-foreground">
               +${formatCurrency(summaryData.changeBalance)} from last {selectedTimePeriod}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-sm font-medium">
               {selectedTimePeriod.charAt(0).toUpperCase() + selectedTimePeriod.slice(1)}ly Income
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${formatCurrency(summaryData.income)}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.income)}</div>
             <p className="text-xs text-muted-foreground">
               +{summaryData.changeIncome}% from last {selectedTimePeriod}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-sm font-medium">
               {selectedTimePeriod.charAt(0).toUpperCase() + selectedTimePeriod.slice(1)}ly Expenses
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${formatCurrency(summaryData.expenses)}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.expenses)}</div>
             <p className="text-xs text-muted-foreground">
               +{summaryData.changeExpenses}% from last {selectedTimePeriod}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-sm font-medium">Savings Rate</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summaryData.savingsRate}%</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{summaryData.savingsRate}%</div>
             <p className="text-xs text-muted-foreground">
               {summaryData.changeSavingsRate >= 0 ? "+" : ""}
               {summaryData.changeSavingsRate}% from last {selectedTimePeriod}
@@ -396,29 +420,43 @@ export default function DashboardPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
-          <TabsTrigger value="loans">Loans</TabsTrigger>
-          <TabsTrigger value="savings">Savings</TabsTrigger>
-          <TabsTrigger value="goals">Goals</TabsTrigger>
+        <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start sm:justify-center">
+          <TabsTrigger value="overview" className="flex-shrink-0">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="accounts" className="flex-shrink-0">
+            Accounts
+          </TabsTrigger>
+          <TabsTrigger value="loans" className="flex-shrink-0">
+            Loans
+          </TabsTrigger>
+          <TabsTrigger value="savings" className="flex-shrink-0">
+            Savings
+          </TabsTrigger>
+          <TabsTrigger value="goals" className="flex-shrink-0">
+            Goals
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
             <Card className="lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Financial Overview</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">Financial Overview</CardTitle>
               </CardHeader>
-              <CardContent className="pl-2">
-                <Overview timePeriod={selectedTimePeriod} dateRange={dateRange} />
+              <CardContent className="pl-2 p-4 sm:p-6 pt-0 sm:pt-0">
+                <div className="w-full overflow-x-auto">
+                  <div className="min-w-[500px]">
+                    <Overview timePeriod={selectedTimePeriod} dateRange={dateRange} />
+                  </div>
+                </div>
               </CardContent>
             </Card>
             <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">Recent Transactions</CardTitle>
                 <CardDescription>You made 12 transactions this {selectedTimePeriod}.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                 <RecentTransactions timePeriod={selectedTimePeriod} dateRange={dateRange} />
               </CardContent>
             </Card>

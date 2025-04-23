@@ -38,14 +38,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Access your wallet</CardTitle>
-          <CardDescription>Enter your email and passcode to access your wealth</CardDescription>
+        <CardHeader className="space-y-1 p-4 sm:p-6">
+          <CardTitle className="text-xl sm:text-2xl font-bold">Access your wallet</CardTitle>
+          <CardDescription className="text-sm">Enter your email and passcode to access your wealth</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
             {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-500">{error}</div>}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -73,11 +73,11 @@ export default function RegisterPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
             </Button>
-            <div className="text-center text-sm">
+            <div className="text-center text-xs sm:text-sm">
               Already have an account?{" "}
               <Link href="/login" className="text-primary hover:underline">
                 Sign in

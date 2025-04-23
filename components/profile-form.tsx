@@ -122,19 +122,25 @@ export function ProfileForm() {
   return (
     <Tabs defaultValue="personal" className="w-full max-w-3xl mx-auto">
       <TabsList className="grid w-full grid-cols-3 mb-6">
-        <TabsTrigger value="personal">Personal Information</TabsTrigger>
-        <TabsTrigger value="payment">Payment Methods</TabsTrigger>
-        <TabsTrigger value="plan">Current Plan</TabsTrigger>
+        <TabsTrigger value="personal" className="text-xs sm:text-sm">
+          Personal Information
+        </TabsTrigger>
+        <TabsTrigger value="payment" className="text-xs sm:text-sm">
+          Payment Methods
+        </TabsTrigger>
+        <TabsTrigger value="plan" className="text-xs sm:text-sm">
+          Current Plan
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="personal">
         <Card>
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Personal Information</CardTitle>
             <CardDescription>Update your personal details and preferences</CardDescription>
           </CardHeader>
           <form onSubmit={handlePersonalInfoSubmit}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -172,7 +178,7 @@ export function ProfileForm() {
                 </Popover>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-4 sm:p-6 pt-0 sm:pt-0">
               <Button type="submit" disabled={isLoading} className="ml-auto">
                 {isLoading ? (
                   "Saving..."
@@ -191,13 +197,17 @@ export function ProfileForm() {
 
       <TabsContent value="payment">
         <Card>
-          <CardHeader>
-            <CardTitle>Payment Methods</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Payment Methods</CardTitle>
             <CardDescription>Manage your payment methods and preferences</CardDescription>
           </CardHeader>
           <form onSubmit={handlePaymentInfoSubmit}>
-            <CardContent className="space-y-4">
-              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-3 gap-4">
+            <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={setPaymentMethod}
+                className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+              >
                 <div>
                   <RadioGroupItem value="credit" id="credit" className="peer sr-only" />
                   <Label
@@ -254,7 +264,7 @@ export function ProfileForm() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="expiry">Expiry Date</Label>
                       <Input
@@ -279,7 +289,7 @@ export function ProfileForm() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-4 sm:p-6 pt-0 sm:pt-0">
               <Button type="submit" disabled={isLoading} className="ml-auto">
                 {isLoading ? (
                   "Saving..."
@@ -298,53 +308,53 @@ export function ProfileForm() {
 
       <TabsContent value="plan">
         <Card>
-          <CardHeader>
-            <CardTitle>Subscription Plan</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Subscription Plan</CardTitle>
             <CardDescription>Manage your subscription and billing cycle</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
             <div className="grid gap-6 md:grid-cols-2">
               {/* Monthly Plan */}
               <div
-                className={`border rounded-lg p-6 ${currentPlan === "monthly" ? "border-primary ring-2 ring-primary ring-opacity-50" : ""}`}
+                className={`border rounded-lg p-4 sm:p-6 ${currentPlan === "monthly" ? "border-primary ring-2 ring-primary ring-opacity-50" : ""}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold">Monthly Plan</h3>
-                    <p className="text-sm text-muted-foreground">Billed monthly</p>
+                    <h3 className="text-base sm:text-lg font-semibold">Monthly Plan</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Billed monthly</p>
                   </div>
                   {currentPlan === "monthly" && (
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary text-xs">
                       Current Plan
                     </Badge>
                   )}
                 </div>
 
                 <div className="mb-4">
-                  <span className="text-3xl font-bold">$9.99</span>
+                  <span className="text-2xl sm:text-3xl font-bold">$9.99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
 
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Unlimited transactions</span>
+                    <span className="text-sm">Unlimited transactions</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Connect up to 3 bank accounts</span>
+                    <span className="text-sm">Connect up to 3 bank accounts</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Basic financial insights</span>
+                    <span className="text-sm">Basic financial insights</span>
                   </li>
                   <li className="flex items-center">
                     <X className="h-4 w-4 text-red-500 mr-2" />
-                    <span className="text-muted-foreground">Advanced analytics</span>
+                    <span className="text-sm text-muted-foreground">Advanced analytics</span>
                   </li>
                   <li className="flex items-center">
                     <X className="h-4 w-4 text-red-500 mr-2" />
-                    <span className="text-muted-foreground">Investment tracking</span>
+                    <span className="text-sm text-muted-foreground">Investment tracking</span>
                   </li>
                 </ul>
 
@@ -360,51 +370,51 @@ export function ProfileForm() {
 
               {/* Annual Plan */}
               <div
-                className={`border rounded-lg p-6 ${currentPlan === "annual" ? "border-primary ring-2 ring-primary ring-opacity-50" : ""}`}
+                className={`border rounded-lg p-4 sm:p-6 ${currentPlan === "annual" ? "border-primary ring-2 ring-primary ring-opacity-50" : ""}`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold">Annual Plan</h3>
-                    <p className="text-sm text-muted-foreground">Billed annually</p>
+                    <h3 className="text-base sm:text-lg font-semibold">Annual Plan</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Billed annually</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {currentPlan === "annual" && (
-                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
+                      <Badge variant="outline" className="bg-primary/10 text-primary border-primary text-xs">
                         Current Plan
                       </Badge>
                     )}
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 text-xs">
                       Save 20%
                     </Badge>
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <span className="text-3xl font-bold">$95.88</span>
+                  <span className="text-2xl sm:text-3xl font-bold">$95.88</span>
                   <span className="text-muted-foreground">/year</span>
-                  <p className="text-sm text-muted-foreground">$7.99/month, billed annually</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">$7.99/month, billed annually</p>
                 </div>
 
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Unlimited transactions</span>
+                    <span className="text-sm">Unlimited transactions</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Connect unlimited bank accounts</span>
+                    <span className="text-sm">Connect unlimited bank accounts</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Advanced financial insights</span>
+                    <span className="text-sm">Advanced financial insights</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Advanced analytics</span>
+                    <span className="text-sm">Advanced analytics</span>
                   </li>
                   <li className="flex items-center">
                     <Check className="h-4 w-4 text-green-500 mr-2" />
-                    <span>Investment tracking</span>
+                    <span className="text-sm">Investment tracking</span>
                   </li>
                 </ul>
 
@@ -420,25 +430,27 @@ export function ProfileForm() {
             </div>
 
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <h4 className="font-medium mb-2">Subscription Details</h4>
-              <p className="text-sm text-muted-foreground mb-2">
+              <h4 className="font-medium mb-2 text-sm sm:text-base">Subscription Details</h4>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                 You are currently on the{" "}
                 <span className="font-medium">{currentPlan === "monthly" ? "Monthly" : "Annual"}</span> plan.
                 {currentPlan === "monthly"
                   ? " Your next billing date is May 15, 2025."
                   : " Your subscription will renew on April 15, 2026."}
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 You can cancel or change your subscription at any time. Changes will take effect at the end of your
                 current billing period.
               </p>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+          <CardFooter className="flex flex-col sm:flex-row justify-between p-4 sm:p-6 pt-0 sm:pt-0 gap-2">
+            <Button variant="outline" className="text-red-500 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto">
               Cancel Subscription
             </Button>
-            <Button variant="outline">Billing History</Button>
+            <Button variant="outline" className="w-full sm:w-auto">
+              Billing History
+            </Button>
           </CardFooter>
         </Card>
       </TabsContent>

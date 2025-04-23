@@ -1,411 +1,366 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Briefcase, Car, Home, Plus, Trash2 } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/utils"
+import { ArrowUpRight, Plus, RefreshCw, Clock, FileText } from "lucide-react"
+import { type Transaction, TransactionDetails } from "./transaction-details"
+import { v4 as uuidv4 } from "uuid"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CsvImporter } from "./csv-importer"
+import { formatDistanceToNow } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const initialGoals = [
-  {
-    id: "1",
-    name: "Buy a House",
-    currentAmount: 35000,
-    targetAmount: 60000,
-    targetDate: "2026-06-30",
-    category: "housing",
-    icon: Home,
-  },
-  {
-    id: "2",
-    name: "New Car",
-    currentAmount: 8000,
-    targetAmount: 25000,
-    targetDate: "2025-12-31",
-    category: "transportation",
-    icon: Car,
-  },
-  {
-    id: "3",
-    name: "Early Retirement",
-    currentAmount: 78500,
-    targetAmount: 500000,
-    targetDate: "2040-01-01",
-    category: "retirement",
-    icon: Briefcase,
-  },
-]
+interface Goal {
+  id: string
+  name: string
+  category: string
+  currentAmount: number
+  targetAmount: number
+  targetDate: string
+  transactions: Transaction[]
+  lastUpdated: Date | string
+  updateMethod?: "plaid" | "csv" | "manual"
+}
 
 export function FinancialGoals() {
-  const [goals, setGoals] = useState(initialGoals)
-  const [showAddGoal, setShowAddGoal] = useState(false)
-  const [showUpdateGoal, setShowUpdateGoal] = useState(false)
-  const [showAddFunds, setShowAddFunds] = useState(false)
-  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null)
-  const [fundAmount, setFundAmount] = useState("")
-  const [newGoal, setNewGoal] = useState({
-    name: "",
-    targetAmount: "",
-    targetDate: "",
-    category: "",
-  })
-  const [updateGoal, setUpdateGoal] = useState({
-    name: "",
-    currentAmount: "",
-    targetAmount: "",
-    targetDate: "",
-    category: "",
-  })
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
 
-  const handleAddGoal = () => {
-    if (newGoal.name && newGoal.targetAmount && newGoal.targetDate && newGoal.category) {
-      const goalToAdd = {
-        id: Date.now().toString(),
-        name: newGoal.name,
-        currentAmount: 0,
-        targetAmount: Number.parseFloat(newGoal.targetAmount),
-        targetDate: newGoal.targetDate,
-        category: newGoal.category,
-        icon: newGoal.category === "housing" ? Home : newGoal.category === "transportation" ? Car : Briefcase,
-      }
+  // Sample goals data
+  const goals: Goal[] = [
+    {
+      id: "1",
+      name: "New Car",
+      category: "Purchase",
+      currentAmount: 5200,
+      targetAmount: 15000,
+      targetDate: "2024-06-30",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
+      updateMethod: "manual",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 300,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 8.67,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 300,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 8.15,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 300,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+      ],
+    },
+    {
+      id: "2",
+      name: "European Vacation",
+      category: "Travel",
+      currentAmount: 3500,
+      targetAmount: 8000,
+      targetDate: "2023-12-15",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
+      updateMethod: "csv",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 250,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 5.42,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 250,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 4.98,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 250,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+      ],
+    },
+    {
+      id: "3",
+      name: "Home Renovation",
+      category: "Home",
+      currentAmount: 7800,
+      targetAmount: 25000,
+      targetDate: "2024-09-30",
+      lastUpdated: new Date(), // Just now
+      updateMethod: "manual",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 12.17,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 11.38,
+          description: "Interest Earned",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 1000,
+          description: "Bonus Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Tax refund contribution",
+        },
+      ],
+    },
+  ]
 
-      setGoals([...goals, goalToAdd])
-      setNewGoal({ name: "", targetAmount: "", targetDate: "", category: "" })
-      setShowAddGoal(false)
-      toast({
-        title: "Goal Added",
-        description: `${goalToAdd.name} has been added to your financial goals.`,
-      })
+  const handleGoalClick = (goal: Goal) => {
+    setSelectedGoal(goal)
+    setIsTransactionModalOpen(true)
+  }
+
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+    // In a real app, this would update the database
+    console.log("Adding transaction:", transaction)
+  }
+
+  const formatLastUpdated = (date: Date | string) => {
+    if (typeof date === "string") {
+      date = new Date(date)
     }
+    return formatDistanceToNow(date, { addSuffix: true })
   }
 
-  const handleUpdateClick = (goal: any) => {
-    setSelectedGoalId(goal.id)
-    setUpdateGoal({
-      name: goal.name,
-      currentAmount: goal.currentAmount.toString(),
-      targetAmount: goal.targetAmount.toString(),
-      targetDate: goal.targetDate,
-      category: goal.category,
-    })
-    setShowUpdateGoal(true)
-  }
-
-  const handleUpdateGoal = () => {
-    if (updateGoal.name && updateGoal.targetAmount && updateGoal.targetDate && updateGoal.category && selectedGoalId) {
-      setGoals(
-        goals.map((goal) => {
-          if (goal.id === selectedGoalId) {
-            return {
-              ...goal,
-              name: updateGoal.name,
-              currentAmount: Number.parseFloat(updateGoal.currentAmount),
-              targetAmount: Number.parseFloat(updateGoal.targetAmount),
-              targetDate: updateGoal.targetDate,
-              category: updateGoal.category,
-              icon:
-                updateGoal.category === "housing" ? Home : updateGoal.category === "transportation" ? Car : Briefcase,
-            }
-          }
-          return goal
-        }),
-      )
-      setShowUpdateGoal(false)
-      setSelectedGoalId(null)
-      toast({
-        title: "Goal Updated",
-        description: "Your financial goal has been updated successfully.",
-      })
-    }
-  }
-
-  const handleDeleteGoal = (id: string) => {
-    setGoals(goals.filter((goal) => goal.id !== id))
-    toast({
-      title: "Goal Deleted",
-      description: "Your financial goal has been deleted.",
-    })
-  }
-
-  const handleAddFundsClick = (goal: any) => {
-    setSelectedGoalId(goal.id)
-    setFundAmount("")
-    setShowAddFunds(true)
-  }
-
-  const handleAddFunds = () => {
-    if (fundAmount && selectedGoalId) {
-      const fundAmountNum = Number.parseFloat(fundAmount)
-
-      if (isNaN(fundAmountNum) || fundAmountNum <= 0) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid amount to add.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setGoals(
-        goals.map((goal) => {
-          if (goal.id === selectedGoalId) {
-            // Calculate new amount
-            const newAmount = goal.currentAmount + fundAmountNum
-
-            return {
-              ...goal,
-              currentAmount: newAmount,
-            }
-          }
-          return goal
-        }),
-      )
-      setShowAddFunds(false)
-      setSelectedGoalId(null)
-      setFundAmount("")
-      toast({
-        title: "Funds Added",
-        description: `$${formatCurrency(fundAmountNum)} has been added to your goal.`,
-      })
+  const getUpdateMethodIcon = (method?: string) => {
+    switch (method) {
+      case "plaid":
+        return <RefreshCw className="h-3 w-3 mr-1" />
+      case "csv":
+        return <FileText className="h-3 w-3 mr-1" />
+      case "manual":
+        return <Clock className="h-3 w-3 mr-1" />
+      default:
+        return <Clock className="h-3 w-3 mr-1" />
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Financial Goals</h2>
-        <Button onClick={() => setShowAddGoal(!showAddGoal)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Goal
-        </Button>
-      </div>
-
-      {showAddGoal && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Goal</CardTitle>
-            <CardDescription>Set a new financial goal to track your progress</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="goal-name">Goal Name</Label>
-                <Input
-                  id="goal-name"
-                  placeholder="e.g., Buy a House"
-                  value={newGoal.name}
-                  onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="target-amount">Target Amount ($)</Label>
-                <Input
-                  id="target-amount"
-                  type="number"
-                  placeholder="50000"
-                  value={newGoal.targetAmount}
-                  onChange={(e) => setNewGoal({ ...newGoal, targetAmount: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="target-date">Target Date</Label>
-                <Input
-                  id="target-date"
-                  type="date"
-                  value={newGoal.targetDate}
-                  onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={newGoal.category} onValueChange={(value) => setNewGoal({ ...newGoal, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="housing">Housing</SelectItem>
-                    <SelectItem value="transportation">Transportation</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="retirement">Retirement</SelectItem>
-                    <SelectItem value="travel">Travel</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddGoal(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddGoal}>Create Goal</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showUpdateGoal && (
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Update Goal</CardTitle>
-            <CardDescription>Update your financial goal</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="update-goal-name">Goal Name</Label>
-                <Input
-                  id="update-goal-name"
-                  placeholder="e.g., Buy a House"
-                  value={updateGoal.name}
-                  onChange={(e) => setUpdateGoal({ ...updateGoal, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-current-amount">Current Amount ($)</Label>
-                <Input
-                  id="update-current-amount"
-                  type="number"
-                  placeholder="10000"
-                  value={updateGoal.currentAmount}
-                  onChange={(e) => setUpdateGoal({ ...updateGoal, currentAmount: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-target-amount">Target Amount ($)</Label>
-                <Input
-                  id="update-target-amount"
-                  type="number"
-                  placeholder="50000"
-                  value={updateGoal.targetAmount}
-                  onChange={(e) => setUpdateGoal({ ...updateGoal, targetAmount: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-target-date">Target Date</Label>
-                <Input
-                  id="update-target-date"
-                  type="date"
-                  value={updateGoal.targetDate}
-                  onChange={(e) => setUpdateGoal({ ...updateGoal, targetDate: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-category">Category</Label>
-                <Select
-                  value={updateGoal.category}
-                  onValueChange={(value) => setUpdateGoal({ ...updateGoal, category: value })}
-                >
-                  <SelectTrigger id="update-category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="housing">Housing</SelectItem>
-                    <SelectItem value="transportation">Transportation</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="retirement">Retirement</SelectItem>
-                    <SelectItem value="travel">Travel</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowUpdateGoal(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdateGoal}>Update Goal</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showAddFunds && selectedGoalId && (
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Add Funds to Goal</CardTitle>
-            <CardDescription>Add funds to {goals.find((goal) => goal.id === selectedGoalId)?.name}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="fund-amount">Amount to Add</Label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                  <Input
-                    id="fund-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="500.00"
-                    className="pl-7"
-                    value={fundAmount}
-                    onChange={(e) => setFundAmount(e.target.value)}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add/Update Goal
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => console.log("Manual add goal")}>Add Goal Manually</DropdownMenuItem>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[725px]">
+                <DialogHeader>
+                  <DialogTitle>Import Goals from CSV</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <CsvImporter
+                    onImport={(data) => {
+                      console.log("Imported data:", data)
+                      // Here you would process the imported data
+                    }}
                   />
                 </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddFunds(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddFunds}>Add Funds</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {goals.map((goal) => (
-          <Card key={goal.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <goal.icon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg font-medium">{goal.name}</CardTitle>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => handleDeleteGoal(goal.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${formatCurrency(goal.currentAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                of ${formatCurrency(goal.targetAmount)} goal • Target: {new Date(goal.targetDate).toLocaleDateString()}
-              </p>
-
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>Progress</span>
-                  <span>{Math.round((goal.currentAmount / goal.targetAmount) * 100)}%</span>
-                </div>
-                <Progress value={(goal.currentAmount / goal.targetAmount) * 100} className="h-2" />
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleUpdateClick(goal)}>
-                    Update
-                  </Button>
-                  <Button size="sm" onClick={() => handleAddFundsClick(goal)}>
-                    Add Funds
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {goals.map((goal) => {
+          const percentComplete = (goal.currentAmount / goal.targetAmount) * 100
+
+          return (
+            <Card
+              key={goal.id}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleGoalClick(goal)}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle>{goal.name}</CardTitle>
+                <CardDescription>
+                  {goal.category} • Target: {goal.targetDate}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Progress</span>
+                    <span className="font-medium">
+                      ${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)}
+                    </span>
+                  </div>
+                  <Progress value={percentComplete} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>${formatCurrency(goal.targetAmount - goal.currentAmount)} to go</span>
+                    <span>{percentComplete.toFixed(0)}% Complete</span>
+                  </div>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        {getUpdateMethodIcon(goal.updateMethod)}
+                        <span>Updated {formatLastUpdated(goal.lastUpdated)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Last updated via {goal.updateMethod || "unknown"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardContent>
+              <CardFooter className="pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent opening the transaction modal
+                    console.log(`Add funds to ${goal.name}`)
+                  }}
+                >
+                  <span>Add Funds</span>
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
+      </div>
+
+      {selectedGoal && (
+        <TransactionDetails
+          isOpen={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+          title={`${selectedGoal.name} Transactions`}
+          description={`Current Amount: $${formatCurrency(selectedGoal.currentAmount)} • Target: $${formatCurrency(selectedGoal.targetAmount)} by ${selectedGoal.targetDate}`}
+          transactions={selectedGoal.transactions}
+          itemName={selectedGoal.name}
+          allowAddTransaction={true}
+          onAddTransaction={handleAddTransaction}
+          lastUpdated={selectedGoal.lastUpdated}
+          updateMethod={selectedGoal.updateMethod}
+        />
+      )}
     </div>
   )
 }

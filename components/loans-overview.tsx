@@ -1,550 +1,353 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Car, GraduationCap, Home, Plus } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/utils"
+import { ArrowUpRight, Plus, RefreshCw, Clock, FileText } from "lucide-react"
+import { type Transaction, TransactionDetails } from "./transaction-details"
+import { v4 as uuidv4 } from "uuid"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CsvImporter } from "./csv-importer"
+import { formatDistanceToNow } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const initialLoans = [
-  {
-    id: "1",
-    name: "Mortgage",
-    originalAmount: 250000,
-    currentBalance: 198450.32,
-    interestRate: 3.25,
-    monthlyPayment: 1087.62,
-    nextPaymentDate: "Apr 1, 2025",
-    icon: Home,
-    loanType: "mortgage",
-  },
-  {
-    id: "2",
-    name: "Car Loan",
-    originalAmount: 28000,
-    currentBalance: 12450.75,
-    interestRate: 4.5,
-    monthlyPayment: 450.3,
-    nextPaymentDate: "Mar 15, 2025",
-    icon: Car,
-    loanType: "car",
-  },
-  {
-    id: "3",
-    name: "Student Loan",
-    originalAmount: 45000,
-    currentBalance: 22340.18,
-    interestRate: 5.25,
-    monthlyPayment: 380.45,
-    nextPaymentDate: "Mar 21, 2025",
-    icon: GraduationCap,
-    loanType: "student",
-  },
-]
+interface Loan {
+  id: string
+  name: string
+  type: string
+  balance: number
+  originalAmount: number
+  interestRate: number
+  minimumPayment: number
+  dueDate: string
+  transactions: Transaction[]
+  lastUpdated: Date | string
+  updateMethod?: "plaid" | "csv" | "manual"
+  institution?: string
+}
 
 export function LoansOverview() {
-  const [loans, setLoans] = useState(initialLoans)
-  const [showAddLoan, setShowAddLoan] = useState(false)
-  const [showUpdateLoan, setShowUpdateLoan] = useState(false)
-  const [showMakePayment, setShowMakePayment] = useState(false)
-  const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null)
-  const [paymentAmount, setPaymentAmount] = useState("")
-  const [newLoan, setNewLoan] = useState({
-    name: "",
-    originalAmount: "",
-    currentBalance: "",
-    interestRate: "",
-    monthlyPayment: "",
-    nextPaymentDate: "",
-    loanType: "mortgage",
-  })
-  const [updateLoan, setUpdateLoan] = useState({
-    name: "",
-    originalAmount: "",
-    currentBalance: "",
-    interestRate: "",
-    monthlyPayment: "",
-    nextPaymentDate: "",
-    loanType: "mortgage",
-  })
+  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null)
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
 
-  const handleAddLoan = () => {
-    if (
-      newLoan.name &&
-      newLoan.originalAmount &&
-      newLoan.currentBalance &&
-      newLoan.interestRate &&
-      newLoan.monthlyPayment &&
-      newLoan.nextPaymentDate
-    ) {
-      const loanToAdd = {
-        id: Date.now().toString(),
-        name: newLoan.name,
-        originalAmount: Number.parseFloat(newLoan.originalAmount),
-        currentBalance: Number.parseFloat(newLoan.currentBalance),
-        interestRate: Number.parseFloat(newLoan.interestRate),
-        monthlyPayment: Number.parseFloat(newLoan.monthlyPayment),
-        nextPaymentDate: newLoan.nextPaymentDate,
-        icon: newLoan.loanType === "mortgage" ? Home : newLoan.loanType === "car" ? Car : GraduationCap,
-        loanType: newLoan.loanType,
-      }
+  // Sample loans data
+  const loans: Loan[] = [
+    {
+      id: "1",
+      name: "Student Loan",
+      type: "Student",
+      balance: 15750.23,
+      originalAmount: 25000,
+      interestRate: 4.5,
+      minimumPayment: 250,
+      dueDate: "2023-05-15",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
+      updateMethod: "plaid",
+      institution: "Sallie Mae",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 250,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 59.06,
+          description: "Interest Accrued",
+          category: "Interest",
+          type: "expense",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 250,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 60.12,
+          description: "Interest Accrued",
+          category: "Interest",
+          type: "expense",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 250,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+      ],
+    },
+    {
+      id: "2",
+      name: "Car Loan",
+      type: "Auto",
+      balance: 12450.67,
+      originalAmount: 18000,
+      interestRate: 3.9,
+      minimumPayment: 320,
+      dueDate: "2023-05-10",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
+      updateMethod: "csv",
+      institution: "Toyota Financial",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-10",
+          amount: 320,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 40.46,
+          description: "Interest Accrued",
+          category: "Interest",
+          type: "expense",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-10",
+          amount: 320,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 41.23,
+          description: "Interest Accrued",
+          category: "Interest",
+          type: "expense",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-10",
+          amount: 320,
+          description: "Monthly Payment",
+          category: "Loan Payment",
+          type: "expense",
+          status: "completed",
+          notes: "Regular monthly payment",
+        },
+      ],
+    },
+    {
+      id: "3",
+      name: "Personal Loan",
+      type: "Personal",
+      balance: 5000,
+      originalAmount: 5000,
+      interestRate: 7.5,
+      minimumPayment: 150,
+      dueDate: "2023-05-20",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
+      updateMethod: "manual",
+      institution: "Local Credit Union",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-20",
+          amount: 5000,
+          description: "Loan Origination",
+          category: "Loan",
+          type: "income",
+          status: "completed",
+          notes: "New personal loan",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-20",
+          amount: 75,
+          description: "Origination Fee",
+          category: "Fee",
+          type: "expense",
+          status: "completed",
+          notes: "Loan origination fee",
+        },
+      ],
+    },
+  ]
 
-      setLoans([...loans, loanToAdd])
-      setNewLoan({
-        name: "",
-        originalAmount: "",
-        currentBalance: "",
-        interestRate: "",
-        monthlyPayment: "",
-        nextPaymentDate: "",
-        loanType: "mortgage",
-      })
-      setShowAddLoan(false)
-      toast({
-        title: "Loan Added",
-        description: `${loanToAdd.name} has been added to your loans.`,
-      })
+  const handleLoanClick = (loan: Loan) => {
+    setSelectedLoan(loan)
+    setIsTransactionModalOpen(true)
+  }
+
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+    // In a real app, this would update the database
+    console.log("Adding transaction:", transaction)
+  }
+
+  const formatLastUpdated = (date: Date | string) => {
+    if (typeof date === "string") {
+      date = new Date(date)
     }
+    return formatDistanceToNow(date, { addSuffix: true })
   }
 
-  const handleUpdateClick = (loan: any) => {
-    setSelectedLoanId(loan.id)
-    setUpdateLoan({
-      name: loan.name,
-      originalAmount: loan.originalAmount.toString(),
-      currentBalance: loan.currentBalance.toString(),
-      interestRate: loan.interestRate.toString(),
-      monthlyPayment: loan.monthlyPayment.toString(),
-      nextPaymentDate: loan.nextPaymentDate,
-      loanType: loan.loanType,
-    })
-    setShowUpdateLoan(true)
-  }
-
-  const handleUpdateLoan = () => {
-    if (
-      updateLoan.name &&
-      updateLoan.originalAmount &&
-      updateLoan.currentBalance &&
-      updateLoan.interestRate &&
-      updateLoan.monthlyPayment &&
-      updateLoan.nextPaymentDate &&
-      selectedLoanId
-    ) {
-      setLoans(
-        loans.map((loan) => {
-          if (loan.id === selectedLoanId) {
-            return {
-              ...loan,
-              name: updateLoan.name,
-              originalAmount: Number.parseFloat(updateLoan.originalAmount),
-              currentBalance: Number.parseFloat(updateLoan.currentBalance),
-              interestRate: Number.parseFloat(updateLoan.interestRate),
-              monthlyPayment: Number.parseFloat(updateLoan.monthlyPayment),
-              nextPaymentDate: updateLoan.nextPaymentDate,
-              icon: updateLoan.loanType === "mortgage" ? Home : updateLoan.loanType === "car" ? Car : GraduationCap,
-              loanType: updateLoan.loanType,
-            }
-          }
-          return loan
-        }),
-      )
-      setShowUpdateLoan(false)
-      setSelectedLoanId(null)
-      toast({
-        title: "Loan Updated",
-        description: "Your loan information has been updated successfully.",
-      })
-    }
-  }
-
-  const handleMakePaymentClick = (loan: any) => {
-    setSelectedLoanId(loan.id)
-    setPaymentAmount(loan.monthlyPayment.toString())
-    setShowMakePayment(true)
-  }
-
-  const handleMakePayment = () => {
-    if (paymentAmount && selectedLoanId) {
-      const paymentAmountNum = Number.parseFloat(paymentAmount)
-
-      if (isNaN(paymentAmountNum) || paymentAmountNum <= 0) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid payment amount.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setLoans(
-        loans.map((loan) => {
-          if (loan.id === selectedLoanId) {
-            // Calculate new balance
-            const newBalance = Math.max(0, loan.currentBalance - paymentAmountNum)
-
-            // Calculate next payment date (add 1 month to current date)
-            const currentDate = new Date()
-            currentDate.setMonth(currentDate.getMonth() + 1)
-            const nextPaymentDate = currentDate.toISOString().split("T")[0]
-
-            return {
-              ...loan,
-              currentBalance: newBalance,
-              nextPaymentDate: nextPaymentDate,
-            }
-          }
-          return loan
-        }),
-      )
-      setShowMakePayment(false)
-      setSelectedLoanId(null)
-      setPaymentAmount("")
-      toast({
-        title: "Payment Made",
-        description: `Payment of $${formatCurrency(paymentAmountNum)} has been applied to your loan.`,
-      })
+  const getUpdateMethodIcon = (method?: string) => {
+    switch (method) {
+      case "plaid":
+        return <RefreshCw className="h-3 w-3 mr-1" />
+      case "csv":
+        return <FileText className="h-3 w-3 mr-1" />
+      case "manual":
+        return <Clock className="h-3 w-3 mr-1" />
+      default:
+        return <Clock className="h-3 w-3 mr-1" />
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Your Loans</h2>
-        <Button onClick={() => setShowAddLoan(!showAddLoan)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Loan
-        </Button>
-      </div>
-
-      {showAddLoan && (
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Add New Loan</CardTitle>
-            <CardDescription>Track a new loan or debt</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="loan-name">Loan Name</Label>
-                <Input
-                  id="loan-name"
-                  placeholder="e.g., Home Mortgage"
-                  value={newLoan.name}
-                  onChange={(e) => setNewLoan({ ...newLoan, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="loan-type">Loan Type</Label>
-                <Select value={newLoan.loanType} onValueChange={(value) => setNewLoan({ ...newLoan, loanType: value })}>
-                  <SelectTrigger id="loan-type">
-                    <SelectValue placeholder="Select loan type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mortgage">Mortgage</SelectItem>
-                    <SelectItem value="car">Auto Loan</SelectItem>
-                    <SelectItem value="student">Student Loan</SelectItem>
-                    <SelectItem value="personal">Personal Loan</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="original-amount">Original Amount</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="original-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="50000.00"
-                      className="pl-7"
-                      value={newLoan.originalAmount}
-                      onChange={(e) => setNewLoan({ ...newLoan, originalAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="current-balance">Current Balance</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="current-balance"
-                      type="number"
-                      step="0.01"
-                      placeholder="45000.00"
-                      className="pl-7"
-                      value={newLoan.currentBalance}
-                      onChange={(e) => setNewLoan({ ...newLoan, currentBalance: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="interest-rate">Interest Rate (%)</Label>
-                  <Input
-                    id="interest-rate"
-                    type="number"
-                    step="0.01"
-                    placeholder="4.5"
-                    value={newLoan.interestRate}
-                    onChange={(e) => setNewLoan({ ...newLoan, interestRate: e.target.value })}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Loans</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add/Update Loan
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => console.log("Manual add loan")}>Add Loan Manually</DropdownMenuItem>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[725px]">
+                <DialogHeader>
+                  <DialogTitle>Import Loans from CSV</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <CsvImporter
+                    onImport={(data) => {
+                      console.log("Imported data:", data)
+                      // Here you would process the imported data
+                    }}
                   />
                 </div>
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {loans.map((loan) => {
+          const percentPaid = ((loan.originalAmount - loan.balance) / loan.originalAmount) * 100
 
-                <div className="grid gap-2">
-                  <Label htmlFor="monthly-payment">Monthly Payment</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="monthly-payment"
-                      type="number"
-                      step="0.01"
-                      placeholder="500.00"
-                      className="pl-7"
-                      value={newLoan.monthlyPayment}
-                      onChange={(e) => setNewLoan({ ...newLoan, monthlyPayment: e.target.value })}
-                    />
+          return (
+            <Card
+              key={loan.id}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleLoanClick(loan)}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle>{loan.name}</CardTitle>
+                <CardDescription>
+                  {loan.type} Loan • {loan.interestRate}% Interest
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Balance</span>
+                    <span className="font-medium">${formatCurrency(loan.balance)}</span>
+                  </div>
+                  <Progress value={percentPaid} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Original: ${formatCurrency(loan.originalAmount)}</span>
+                    <span>{percentPaid.toFixed(0)}% Paid</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="next-payment-date">Next Payment Date</Label>
-                <Input
-                  id="next-payment-date"
-                  type="date"
-                  value={newLoan.nextPaymentDate}
-                  onChange={(e) => setNewLoan({ ...newLoan, nextPaymentDate: e.target.value })}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddLoan(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddLoan}>Add Loan</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showUpdateLoan && (
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Update Loan</CardTitle>
-            <CardDescription>Update your loan information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="update-loan-name">Loan Name</Label>
-                <Input
-                  id="update-loan-name"
-                  placeholder="e.g., Home Mortgage"
-                  value={updateLoan.name}
-                  onChange={(e) => setUpdateLoan({ ...updateLoan, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-loan-type">Loan Type</Label>
-                <Select
-                  value={updateLoan.loanType}
-                  onValueChange={(value) => setUpdateLoan({ ...updateLoan, loanType: value })}
+                <div className="flex justify-between text-sm">
+                  <span>Next Payment</span>
+                  <span className="font-medium">
+                    ${formatCurrency(loan.minimumPayment)} • Due {loan.dueDate}
+                  </span>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        {getUpdateMethodIcon(loan.updateMethod)}
+                        <span>Updated {formatLastUpdated(loan.lastUpdated)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Last updated via {loan.updateMethod || "unknown"}</p>
+                      {loan.institution && <p>Institution: {loan.institution}</p>}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardContent>
+              <CardFooter className="pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent opening the transaction modal
+                    console.log(`Make payment for ${loan.name}`)
+                  }}
                 >
-                  <SelectTrigger id="update-loan-type">
-                    <SelectValue placeholder="Select loan type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mortgage">Mortgage</SelectItem>
-                    <SelectItem value="car">Auto Loan</SelectItem>
-                    <SelectItem value="student">Student Loan</SelectItem>
-                    <SelectItem value="personal">Personal Loan</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="update-original-amount">Original Amount</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-original-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="50000.00"
-                      className="pl-7"
-                      value={updateLoan.originalAmount}
-                      onChange={(e) => setUpdateLoan({ ...updateLoan, originalAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="update-current-balance">Current Balance</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-current-balance"
-                      type="number"
-                      step="0.01"
-                      placeholder="45000.00"
-                      className="pl-7"
-                      value={updateLoan.currentBalance}
-                      onChange={(e) => setUpdateLoan({ ...updateLoan, currentBalance: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="update-interest-rate">Interest Rate (%)</Label>
-                  <Input
-                    id="update-interest-rate"
-                    type="number"
-                    step="0.01"
-                    placeholder="4.5"
-                    value={updateLoan.interestRate}
-                    onChange={(e) => setUpdateLoan({ ...updateLoan, interestRate: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="update-monthly-payment">Monthly Payment</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-monthly-payment"
-                      type="number"
-                      step="0.01"
-                      placeholder="500.00"
-                      className="pl-7"
-                      value={updateLoan.monthlyPayment}
-                      onChange={(e) => setUpdateLoan({ ...updateLoan, monthlyPayment: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-next-payment-date">Next Payment Date</Label>
-                <Input
-                  id="update-next-payment-date"
-                  type="date"
-                  value={updateLoan.nextPaymentDate}
-                  onChange={(e) => setUpdateLoan({ ...updateLoan, nextPaymentDate: e.target.value })}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowUpdateLoan(false)}>
-                  Cancel
+                  <span>Make Payment</span>
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
-                <Button onClick={handleUpdateLoan}>Update Loan</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showMakePayment && selectedLoanId && (
-        <Card className="mb-4">
-          <CardHeader>
-            <CardTitle>Make Payment</CardTitle>
-            <CardDescription>
-              Make a payment towards {loans.find((loan) => loan.id === selectedLoanId)?.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="payment-amount">Payment Amount</Label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                  <Input
-                    id="payment-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="500.00"
-                    className="pl-7"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Suggested payment: $
-                  {formatCurrency(loans.find((loan) => loan.id === selectedLoanId)?.monthlyPayment || 0)}
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowMakePayment(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleMakePayment}>Make Payment</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {loans.map((loan) => (
-          <Card key={loan.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <loan.icon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg font-medium">{loan.name}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${formatCurrency(loan.currentBalance)}</div>
-              <p className="text-xs text-muted-foreground">
-                {((loan.currentBalance / loan.originalAmount) * 100).toFixed(1)}% remaining • {loan.interestRate}%
-                interest
-              </p>
-
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>Paid Off</span>
-                  <span>{(100 - (loan.currentBalance / loan.originalAmount) * 100).toFixed(1)}%</span>
-                </div>
-                <Progress value={100 - (loan.currentBalance / loan.originalAmount) * 100} className="h-2" />
-                <div className="flex items-center justify-between mt-4">
-                  <div>
-                    <p className="text-sm font-medium">Next Payment</p>
-                    <p className="text-xs text-muted-foreground">
-                      ${formatCurrency(loan.monthlyPayment)} on {loan.nextPaymentDate}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleUpdateClick(loan)}>
-                      Update
-                    </Button>
-                    <Button size="sm" onClick={() => handleMakePaymentClick(loan)}>
-                      Make Payment
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardFooter>
+            </Card>
+          )
+        })}
       </div>
+
+      {selectedLoan && (
+        <TransactionDetails
+          isOpen={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+          title={`${selectedLoan.name} Transactions`}
+          description={`Current Balance: $${formatCurrency(selectedLoan.balance)} • Interest Rate: ${selectedLoan.interestRate}%`}
+          transactions={selectedLoan.transactions}
+          itemName={selectedLoan.name}
+          allowAddTransaction={true}
+          onAddTransaction={handleAddTransaction}
+          lastUpdated={selectedLoan.lastUpdated}
+          updateMethod={selectedLoan.updateMethod}
+        />
+      )}
     </div>
   )
 }

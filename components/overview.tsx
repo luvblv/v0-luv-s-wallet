@@ -239,17 +239,19 @@ export function Overview({ timePeriod, dateRange }: OverviewProps) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis tickFormatter={formatYAxis} />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend />
-        <Bar dataKey="Income" fill="#22c55e" />
-        <Bar dataKey="Expenses" fill="#ef4444" />
-        <Bar dataKey="Savings" fill="#3b82f6" />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="w-full h-[350px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" tick={{ fontSize: 12 }} tickMargin={10} />
+          <YAxis tickFormatter={formatYAxis} tick={{ fontSize: 12 }} width={40} />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: "12px", marginTop: "10px" }} />
+          <Bar dataKey="Income" fill="#22c55e" />
+          <Bar dataKey="Expenses" fill="#ef4444" />
+          <Bar dataKey="Savings" fill="#3b82f6" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   )
 }

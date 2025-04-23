@@ -1,349 +1,424 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CreditCard, Landmark, Plus, Wallet, RefreshCw } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { PlaidLink } from "@/components/plaid-link"
-import { toast } from "@/components/ui/use-toast"
+import { ArrowUpRight, CreditCard, Plus, RefreshCw, Clock } from "lucide-react"
+import { type Transaction, TransactionDetails } from "./transaction-details"
+import { v4 as uuidv4 } from "uuid"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CsvImporter } from "./csv-importer"
+import { PlaidLink } from "./plaid-link"
+import { formatDistanceToNow } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const initialAccounts = [
-  {
-    id: "1",
-    name: "Main Checking",
-    type: "checking",
-    balance: 4580.21,
-    institution: "Chase Bank",
-    lastUpdated: "Today",
-    icon: Landmark,
-  },
-  {
-    id: "2",
-    name: "Savings Account",
-    type: "savings",
-    balance: 8000.0,
-    institution: "Chase Bank",
-    lastUpdated: "Today",
-    icon: Wallet,
-  },
-  {
-    id: "3",
-    name: "Credit Card",
-    type: "credit",
-    balance: -1250.3,
-    limit: 5000,
-    institution: "American Express",
-    lastUpdated: "Yesterday",
-    icon: CreditCard,
-  },
-]
+interface Account {
+  id: string
+  name: string
+  type: string
+  balance: number
+  accountNumber: string
+  transactions: Transaction[]
+  lastUpdated: Date | string
+  updateMethod?: "plaid" | "csv" | "manual"
+  institution?: string
+}
 
 export function AccountSummary() {
-  const [accounts, setAccounts] = useState(initialAccounts)
-  const [showAddAccount, setShowAddAccount] = useState(false)
-  const [showConnectBank, setShowConnectBank] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [newAccount, setNewAccount] = useState({
-    name: "",
-    type: "",
-    balance: "",
-    institution: "",
-    limit: "",
-  })
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
+  const [isPlaidDialogOpen, setIsPlaidDialogOpen] = useState(false)
+  const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false)
 
-  const handleAddAccount = () => {
-    if (newAccount.name && newAccount.type && newAccount.balance && newAccount.institution) {
-      const accountToAdd = {
-        id: Date.now().toString(),
-        name: newAccount.name,
-        type: newAccount.type,
-        balance: Number.parseFloat(newAccount.balance),
-        institution: newAccount.institution,
-        lastUpdated: "Just now",
-        icon: newAccount.type === "checking" ? Landmark : newAccount.type === "savings" ? Wallet : CreditCard,
-        ...(newAccount.type === "credit" && newAccount.limit ? { limit: Number.parseFloat(newAccount.limit) } : {}),
-      }
+  // Sample accounts data
+  const accounts: Account[] = [
+    {
+      id: "1",
+      name: "Main Checking",
+      type: "Checking",
+      balance: 5280.42,
+      accountNumber: "****4567",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      updateMethod: "plaid",
+      institution: "Chase Bank",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 1200,
+          description: "Paycheck Deposit",
+          category: "Income",
+          type: "income",
+          status: "completed",
+          balance: 5280.42,
+          notes: "Bi-weekly paycheck",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-12",
+          amount: 85.33,
+          description: "Grocery Store",
+          category: "Groceries",
+          type: "expense",
+          status: "completed",
+          balance: 4080.42,
+          notes: "Weekly grocery shopping",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-10",
+          amount: 9.99,
+          description: "Streaming Service",
+          category: "Entertainment",
+          type: "expense",
+          status: "completed",
+          balance: 4165.75,
+          notes: "Monthly subscription",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-05",
+          amount: 1500,
+          description: "Rent Payment",
+          category: "Housing",
+          type: "expense",
+          status: "completed",
+          balance: 4175.74,
+          notes: "Monthly rent",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 1200,
+          description: "Paycheck Deposit",
+          category: "Income",
+          type: "income",
+          status: "completed",
+          balance: 5675.74,
+          notes: "Bi-weekly paycheck",
+        },
+      ],
+    },
+    {
+      id: "2",
+      name: "Savings",
+      type: "Savings",
+      balance: 12750.83,
+      accountNumber: "****7890",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      updateMethod: "plaid",
+      institution: "Chase Bank",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 500,
+          description: "Transfer from Checking",
+          category: "Transfer",
+          type: "income",
+          status: "completed",
+          balance: 12750.83,
+          notes: "Monthly savings transfer",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 42.83,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          balance: 12250.83,
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 500,
+          description: "Transfer from Checking",
+          category: "Transfer",
+          type: "income",
+          status: "completed",
+          balance: 12208.0,
+          notes: "Monthly savings transfer",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 41.5,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          balance: 11708.0,
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 500,
+          description: "Transfer from Checking",
+          category: "Transfer",
+          type: "income",
+          status: "completed",
+          balance: 11666.5,
+          notes: "Monthly savings transfer",
+        },
+      ],
+    },
+    {
+      id: "3",
+      name: "Credit Card",
+      type: "Credit",
+      balance: -1240.56,
+      accountNumber: "****1234",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      updateMethod: "csv",
+      institution: "American Express",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-14",
+          amount: 42.75,
+          description: "Restaurant",
+          category: "Dining",
+          type: "expense",
+          status: "completed",
+          balance: -1240.56,
+          notes: "Dinner with friends",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-12",
+          amount: 500,
+          description: "Credit Card Payment",
+          category: "Payment",
+          type: "income",
+          status: "completed",
+          balance: -1197.81,
+          notes: "Monthly payment",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-10",
+          amount: 120.99,
+          description: "Online Shopping",
+          category: "Shopping",
+          type: "expense",
+          status: "completed",
+          balance: -1697.81,
+          notes: "New headphones",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-08",
+          amount: 35.4,
+          description: "Gas Station",
+          category: "Transportation",
+          type: "expense",
+          status: "completed",
+          balance: -1576.82,
+          notes: "Fuel",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-05",
+          amount: 65.32,
+          description: "Grocery Store",
+          category: "Groceries",
+          type: "expense",
+          status: "completed",
+          balance: -1541.42,
+          notes: "Weekly grocery shopping",
+        },
+      ],
+    },
+    {
+      id: "4",
+      name: "Investment Account",
+      type: "Investment",
+      balance: 45320.18,
+      accountNumber: "****5678",
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
+      updateMethod: "manual",
+      institution: "Vanguard",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Investment",
+          type: "expense",
+          status: "completed",
+          balance: 45320.18,
+          notes: "401k contribution",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 320.45,
+          description: "Dividend Payment",
+          category: "Income",
+          type: "income",
+          status: "completed",
+          balance: 44820.18,
+          notes: "Quarterly dividend",
+        },
+      ],
+    },
+  ]
 
-      setAccounts([...accounts, accountToAdd])
-      setNewAccount({ name: "", type: "", balance: "", institution: "", limit: "" })
-      setShowAddAccount(false)
-      toast({
-        title: "Account Added",
-        description: `${accountToAdd.name} has been added to your accounts.`,
-      })
-    }
+  const handleAccountClick = (account: Account) => {
+    setSelectedAccount(account)
+    setIsTransactionModalOpen(true)
   }
 
-  const handlePlaidSuccess = (plaidAccounts: any[]) => {
-    // Transform Plaid accounts to our format
-    const newAccounts = plaidAccounts.map((account) => {
-      const accountType =
-        account.type === "depository"
-          ? account.subtype === "checking"
-            ? "checking"
-            : "savings"
-          : account.type === "credit"
-            ? "credit"
-            : "other"
-
-      return {
-        id: account.account_id,
-        name: account.name,
-        type: accountType,
-        balance: account.balances.available || account.balances.current,
-        institution: account.institution_name || "Connected Bank",
-        lastUpdated: "Just now",
-        icon: accountType === "checking" ? Landmark : accountType === "savings" ? Wallet : CreditCard,
-        ...(accountType === "credit" && account.balances.limit ? { limit: account.balances.limit } : {}),
-      }
-    })
-
-    setAccounts([...accounts, ...newAccounts])
-    setShowConnectBank(false)
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+    // In a real app, this would update the database
+    console.log("Adding transaction:", transaction)
   }
 
-  const refreshAccounts = async () => {
-    setIsRefreshing(true)
-
-    // In a real app, this would call your API to refresh account data from Plaid
-    const accessToken = localStorage.getItem("plaid_access_token")
-
-    if (accessToken) {
-      try {
-        const response = await fetch("/api/plaid", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "getAccounts",
-            accessToken,
-          }),
-        })
-
-        const data = await response.json()
-
-        if (data.accounts) {
-          // Update account balances
-          const updatedAccounts = accounts.map((account) => {
-            const plaidAccount = data.accounts.find((a: any) => a.account_id === account.id)
-            if (plaidAccount) {
-              return {
-                ...account,
-                balance: plaidAccount.balances.available || plaidAccount.balances.current,
-                lastUpdated: "Just now",
-              }
-            }
-            return account
-          })
-
-          setAccounts(updatedAccounts)
-          toast({
-            title: "Accounts Refreshed",
-            description: "Your account balances have been updated.",
-          })
-        }
-      } catch (error) {
-        console.error("Error refreshing accounts:", error)
-        toast({
-          title: "Error",
-          description: "Failed to refresh account data.",
-          variant: "destructive",
-        })
-      }
-    } else {
-      // Simulate a refresh for demo purposes
-      setTimeout(() => {
-        const updatedAccounts = accounts.map((account) => ({
-          ...account,
-          lastUpdated: "Just now",
-        }))
-        setAccounts(updatedAccounts)
-        toast({
-          title: "Accounts Refreshed",
-          description: "Your account balances have been updated.",
-        })
-      }, 1000)
+  const formatLastUpdated = (date: Date | string) => {
+    if (typeof date === "string") {
+      date = new Date(date)
     }
+    return formatDistanceToNow(date, { addSuffix: true })
+  }
 
-    setIsRefreshing(false)
+  const getUpdateMethodIcon = (method?: string) => {
+    switch (method) {
+      case "plaid":
+        return <RefreshCw className="h-3 w-3 mr-1" />
+      case "csv":
+        return <CreditCard className="h-3 w-3 mr-1" />
+      case "manual":
+        return <Clock className="h-3 w-3 mr-1" />
+      default:
+        return <Clock className="h-3 w-3 mr-1" />
+    }
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Your Accounts</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={refreshAccounts} disabled={isRefreshing}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button variant="outline" onClick={() => setShowConnectBank(true)}>
-            Connect Bank
-          </Button>
-          <Button onClick={() => setShowAddAccount(!showAddAccount)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Account
-          </Button>
-        </div>
-      </div>
-
-      {showConnectBank && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Connect Your Bank</CardTitle>
-            <CardDescription>
-              Securely connect your bank accounts to automatically import your financial data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                We use Plaid to securely connect to thousands of banks. Your credentials are never stored on our
-                servers.
-              </p>
-
-              <div className="flex justify-between space-x-4">
-                <Button variant="outline" className="w-full" onClick={() => setShowConnectBank(false)}>
-                  Cancel
-                </Button>
-                <PlaidLink onSuccess={handlePlaidSuccess} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showAddAccount && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Add New Account</CardTitle>
-            <CardDescription>Connect a new bank account or credit card</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="account-name">Account Name</Label>
-                <Input
-                  id="account-name"
-                  placeholder="e.g., Checking Account"
-                  value={newAccount.name}
-                  onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="account-type">Account Type</Label>
-                <Select
-                  value={newAccount.type}
-                  onValueChange={(value) => setNewAccount({ ...newAccount, type: value })}
-                >
-                  <SelectTrigger id="account-type">
-                    <SelectValue placeholder="Select account type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="checking">Checking</SelectItem>
-                    <SelectItem value="savings">Savings</SelectItem>
-                    <SelectItem value="credit">Credit Card</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="balance">
-                  {newAccount.type === "credit" ? "Current Balance (negative for amount owed)" : "Current Balance"}
-                </Label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                  <Input
-                    id="balance"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="pl-7"
-                    value={newAccount.balance}
-                    onChange={(e) => setNewAccount({ ...newAccount, balance: e.target.value })}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Accounts</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add/Update Account
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => console.log("Manual add account")}>Add Account Manually</DropdownMenuItem>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Connect Bank (Plaid)</DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Connect Bank Account</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <PlaidLink
+                    onSuccess={(accounts) => {
+                      console.log("Connected accounts:", accounts)
+                      // Here you would update your accounts state
+                    }}
                   />
                 </div>
-              </div>
-
-              {newAccount.type === "credit" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="credit-limit">Credit Limit</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="credit-limit"
-                      type="number"
-                      step="0.01"
-                      placeholder="5000.00"
-                      className="pl-7"
-                      value={newAccount.limit}
-                      onChange={(e) => setNewAccount({ ...newAccount, limit: e.target.value })}
-                    />
-                  </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[725px]">
+                <DialogHeader>
+                  <DialogTitle>Import Accounts from CSV</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <CsvImporter
+                    onImport={(data) => {
+                      console.log("Imported data:", data)
+                      // Here you would process the imported data
+                    }}
+                  />
                 </div>
-              )}
-
-              <div className="grid gap-2">
-                <Label htmlFor="institution">Financial Institution</Label>
-                <Input
-                  id="institution"
-                  placeholder="e.g., Chase Bank"
-                  value={newAccount.institution}
-                  onChange={(e) => setNewAccount({ ...newAccount, institution: e.target.value })}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddAccount(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddAccount}>Add Account</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {accounts.map((account) => (
-          <Card key={account.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <account.icon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg font-medium">{account.name}</CardTitle>
-              </div>
+          <Card
+            key={account.id}
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => handleAccountClick(account)}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between">
+                <span>{account.name}</span>
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+              </CardTitle>
+              <CardDescription>
+                {account.type} • {account.accountNumber}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {account.type === "credit" ? "-" : ""}${formatCurrency(Math.abs(account.balance))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {account.institution} • Updated {account.lastUpdated}
-              </p>
-
-              {account.type === "credit" && account.limit && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Credit Used</span>
-                    <span>{Math.round((Math.abs(account.balance) / account.limit) * 100)}%</span>
-                  </div>
-                  <Progress value={(Math.abs(account.balance) / account.limit) * 100} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ${formatCurrency(Math.abs(account.balance))} of ${formatCurrency(account.limit)} limit
-                  </p>
-                </div>
-              )}
+              <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center text-xs text-muted-foreground mt-1">
+                      {getUpdateMethodIcon(account.updateMethod)}
+                      <span>Updated {formatLastUpdated(account.lastUpdated)}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Last updated via {account.updateMethod || "unknown"}</p>
+                    {account.institution && <p>Institution: {account.institution}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardContent>
+            <CardFooter className="pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto"
+                onClick={(e) => {
+                  e.stopPropagation() // Prevent opening the transaction modal
+                  console.log(`View details for ${account.name}`)
+                }}
+              >
+                <span>View Details</span>
+                <ArrowUpRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>
+
+      {selectedAccount && (
+        <TransactionDetails
+          isOpen={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+          title={`${selectedAccount.name} Transactions`}
+          description={`Account ${selectedAccount.accountNumber} • Current Balance: $${formatCurrency(selectedAccount.balance)}`}
+          transactions={selectedAccount.transactions}
+          itemName={selectedAccount.name}
+          showBalance={true}
+          allowAddTransaction={true}
+          onAddTransaction={handleAddTransaction}
+          lastUpdated={selectedAccount.lastUpdated}
+          updateMethod={selectedAccount.updateMethod}
+        />
+      )}
     </div>
   )
 }

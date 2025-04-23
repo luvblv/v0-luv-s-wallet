@@ -1,524 +1,376 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Briefcase, Home, Plane, Plus, Umbrella } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/utils"
+import { ArrowUpRight, Plus, RefreshCw, Clock, FileText } from "lucide-react"
+import { type Transaction, TransactionDetails } from "./transaction-details"
+import { v4 as uuidv4 } from "uuid"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CsvImporter } from "./csv-importer"
+import { formatDistanceToNow } from "date-fns"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-const initialSavingsAccounts = [
-  {
-    id: "1",
-    name: "Emergency Fund",
-    currentAmount: 12000,
-    targetAmount: 15000,
-    monthlyContribution: 300,
-    icon: Umbrella,
-    savingsType: "emergency",
-  },
-  {
-    id: "2",
-    name: "Vacation Fund",
-    currentAmount: 2450,
-    targetAmount: 5000,
-    monthlyContribution: 200,
-    targetDate: "Dec 2025",
-    icon: Plane,
-    savingsType: "vacation",
-  },
-  {
-    id: "3",
-    name: "House Down Payment",
-    currentAmount: 35000,
-    targetAmount: 60000,
-    monthlyContribution: 800,
-    targetDate: "Jun 2026",
-    icon: Home,
-    savingsType: "house",
-  },
-  {
-    id: "4",
-    name: "Retirement",
-    currentAmount: 78500,
-    monthlyContribution: 500,
-    icon: Briefcase,
-    savingsType: "retirement",
-  },
-]
+interface SavingsAccount {
+  id: string
+  name: string
+  type: string
+  balance: number
+  interestRate: number
+  goal?: number
+  transactions: Transaction[]
+  lastUpdated: Date | string
+  updateMethod?: "plaid" | "csv" | "manual"
+  institution?: string
+}
 
 export function SavingsOverview() {
-  const [savingsAccounts, setSavingsAccounts] = useState(initialSavingsAccounts)
-  const [showAddSavings, setShowAddSavings] = useState(false)
-  const [showUpdateSavings, setShowUpdateSavings] = useState(false)
-  const [showAddFunds, setShowAddFunds] = useState(false)
-  const [selectedSavingsId, setSelectedSavingsId] = useState<string | null>(null)
-  const [fundAmount, setFundAmount] = useState("")
-  const [newSavings, setNewSavings] = useState({
-    name: "",
-    currentAmount: "",
-    targetAmount: "",
-    monthlyContribution: "",
-    targetDate: "",
-    savingsType: "emergency",
-  })
-  const [updateSavings, setUpdateSavings] = useState({
-    name: "",
-    currentAmount: "",
-    targetAmount: "",
-    monthlyContribution: "",
-    targetDate: "",
-    savingsType: "emergency",
-  })
+  const [selectedAccount, setSelectedAccount] = useState<SavingsAccount | null>(null)
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
 
-  const handleAddSavings = () => {
-    if (newSavings.name && newSavings.currentAmount && newSavings.monthlyContribution) {
-      const savingsToAdd = {
-        id: Date.now().toString(),
-        name: newSavings.name,
-        currentAmount: Number.parseFloat(newSavings.currentAmount),
-        monthlyContribution: Number.parseFloat(newSavings.monthlyContribution),
-        ...(newSavings.targetAmount ? { targetAmount: Number.parseFloat(newSavings.targetAmount) } : {}),
-        ...(newSavings.targetDate ? { targetDate: newSavings.targetDate } : {}),
-        icon:
-          newSavings.savingsType === "emergency"
-            ? Umbrella
-            : newSavings.savingsType === "vacation"
-              ? Plane
-              : newSavings.savingsType === "house"
-                ? Home
-                : Briefcase,
-        savingsType: newSavings.savingsType,
-      }
+  // Sample savings accounts data
+  const savingsAccounts: SavingsAccount[] = [
+    {
+      id: "1",
+      name: "Emergency Fund",
+      type: "High-Yield Savings",
+      balance: 8500,
+      interestRate: 3.5,
+      goal: 10000,
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+      updateMethod: "plaid",
+      institution: "Ally Bank",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 24.79,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 23.12,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 500,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+      ],
+    },
+    {
+      id: "2",
+      name: "Vacation Fund",
+      type: "Savings",
+      balance: 2750,
+      interestRate: 2.1,
+      goal: 5000,
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 36), // 36 hours ago
+      updateMethod: "csv",
+      institution: "Capital One",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-15",
+          amount: 200,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 4.48,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 200,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 4.12,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 200,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+      ],
+    },
+    {
+      id: "3",
+      name: "Home Down Payment",
+      type: "Certificate of Deposit",
+      balance: 15000,
+      interestRate: 4.2,
+      goal: 50000,
+      lastUpdated: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+      updateMethod: "manual",
+      institution: "Marcus by Goldman Sachs",
+      transactions: [
+        {
+          id: uuidv4(),
+          date: "2023-04-01",
+          amount: 52.5,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-15",
+          amount: 5000,
+          description: "Bonus Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Annual bonus deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-03-01",
+          amount: 35.0,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-15",
+          amount: 1000,
+          description: "Monthly Contribution",
+          category: "Deposit",
+          type: "income",
+          status: "completed",
+          notes: "Regular monthly deposit",
+        },
+        {
+          id: uuidv4(),
+          date: "2023-02-01",
+          amount: 31.5,
+          description: "Interest Payment",
+          category: "Interest",
+          type: "income",
+          status: "completed",
+          notes: "Monthly interest",
+        },
+      ],
+    },
+  ]
 
-      setSavingsAccounts([...savingsAccounts, savingsToAdd])
-      setNewSavings({
-        name: "",
-        currentAmount: "",
-        targetAmount: "",
-        monthlyContribution: "",
-        targetDate: "",
-        savingsType: "emergency",
-      })
-      setShowAddSavings(false)
-      toast({
-        title: "Savings Added",
-        description: `${savingsToAdd.name} has been added to your savings accounts.`,
-      })
+  const handleAccountClick = (account: SavingsAccount) => {
+    setSelectedAccount(account)
+    setIsTransactionModalOpen(true)
+  }
+
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+    // In a real app, this would update the database
+    console.log("Adding transaction:", transaction)
+  }
+
+  const formatLastUpdated = (date: Date | string) => {
+    if (typeof date === "string") {
+      date = new Date(date)
     }
+    return formatDistanceToNow(date, { addSuffix: true })
   }
 
-  const handleUpdateClick = (savings: any) => {
-    setSelectedSavingsId(savings.id)
-    setUpdateSavings({
-      name: savings.name,
-      currentAmount: savings.currentAmount.toString(),
-      targetAmount: savings.targetAmount ? savings.targetAmount.toString() : "",
-      monthlyContribution: savings.monthlyContribution.toString(),
-      targetDate: savings.targetDate || "",
-      savingsType: savings.savingsType,
-    })
-    setShowUpdateSavings(true)
-  }
-
-  const handleUpdateSavings = () => {
-    if (updateSavings.name && updateSavings.currentAmount && updateSavings.monthlyContribution && selectedSavingsId) {
-      setSavingsAccounts(
-        savingsAccounts.map((savings) => {
-          if (savings.id === selectedSavingsId) {
-            return {
-              ...savings,
-              name: updateSavings.name,
-              currentAmount: Number.parseFloat(updateSavings.currentAmount),
-              monthlyContribution: Number.parseFloat(updateSavings.monthlyContribution),
-              ...(updateSavings.targetAmount
-                ? { targetAmount: Number.parseFloat(updateSavings.targetAmount) }
-                : { targetAmount: undefined }),
-              ...(updateSavings.targetDate ? { targetDate: updateSavings.targetDate } : { targetDate: undefined }),
-              icon:
-                updateSavings.savingsType === "emergency"
-                  ? Umbrella
-                  : updateSavings.savingsType === "vacation"
-                    ? Plane
-                    : updateSavings.savingsType === "house"
-                      ? Home
-                      : Briefcase,
-              savingsType: updateSavings.savingsType,
-            }
-          }
-          return savings
-        }),
-      )
-      setShowUpdateSavings(false)
-      setSelectedSavingsId(null)
-      toast({
-        title: "Savings Updated",
-        description: "Your savings information has been updated successfully.",
-      })
-    }
-  }
-
-  const handleAddFundsClick = (savings: any) => {
-    setSelectedSavingsId(savings.id)
-    setFundAmount(savings.monthlyContribution.toString())
-    setShowAddFunds(true)
-  }
-
-  const handleAddFunds = () => {
-    if (fundAmount && selectedSavingsId) {
-      const fundAmountNum = Number.parseFloat(fundAmount)
-
-      if (isNaN(fundAmountNum) || fundAmountNum <= 0) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid amount to add.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setSavingsAccounts(
-        savingsAccounts.map((savings) => {
-          if (savings.id === selectedSavingsId) {
-            // Calculate new balance
-            const newAmount = savings.currentAmount + fundAmountNum
-
-            return {
-              ...savings,
-              currentAmount: newAmount,
-            }
-          }
-          return savings
-        }),
-      )
-      setShowAddFunds(false)
-      setSelectedSavingsId(null)
-      setFundAmount("")
-      toast({
-        title: "Funds Added",
-        description: `$${formatCurrency(fundAmountNum)} has been added to your savings account.`,
-      })
+  const getUpdateMethodIcon = (method?: string) => {
+    switch (method) {
+      case "plaid":
+        return <RefreshCw className="h-3 w-3 mr-1" />
+      case "csv":
+        return <FileText className="h-3 w-3 mr-1" />
+      case "manual":
+        return <Clock className="h-3 w-3 mr-1" />
+      default:
+        return <Clock className="h-3 w-3 mr-1" />
     }
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Your Savings</h2>
-        <Button onClick={() => setShowAddSavings(!showAddSavings)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Savings
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Savings</h2>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add/Update Account
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => console.log("Manual add savings account")}>
+              Add Savings Account Manually
+            </DropdownMenuItem>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[725px]">
+                <DialogHeader>
+                  <DialogTitle>Import Savings Accounts from CSV</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <CsvImporter
+                    onImport={(data) => {
+                      console.log("Imported data:", data)
+                      // Here you would process the imported data
+                    }}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {savingsAccounts.map((account) => {
+          const percentToGoal = account.goal ? (account.balance / account.goal) * 100 : 100
+
+          return (
+            <Card
+              key={account.id}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleAccountClick(account)}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle>{account.name}</CardTitle>
+                <CardDescription>
+                  {account.type} • {account.interestRate}% APY
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
+                {account.goal && (
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Goal Progress</span>
+                      <span className="font-medium">
+                        ${formatCurrency(account.balance)} of ${formatCurrency(account.goal)}
+                      </span>
+                    </div>
+                    <Progress value={percentToGoal} className="h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>${formatCurrency(account.goal - account.balance)} to go</span>
+                      <span>{percentToGoal.toFixed(0)}% Complete</span>
+                    </div>
+                  </div>
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        {getUpdateMethodIcon(account.updateMethod)}
+                        <span>Updated {formatLastUpdated(account.lastUpdated)}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Last updated via {account.updateMethod || "unknown"}</p>
+                      {account.institution && <p>Institution: {account.institution}</p>}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </CardContent>
+              <CardFooter className="pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent opening the transaction modal
+                    console.log(`Add funds to ${account.name}`)
+                  }}
+                >
+                  <span>Add Funds</span>
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
       </div>
 
-      {showAddSavings && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Add New Savings</CardTitle>
-            <CardDescription>Track a new savings goal or account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="savings-name">Savings Name</Label>
-                <Input
-                  id="savings-name"
-                  placeholder="e.g., Emergency Fund"
-                  value={newSavings.name}
-                  onChange={(e) => setNewSavings({ ...newSavings, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="savings-type">Savings Type</Label>
-                <Select
-                  value={newSavings.savingsType}
-                  onValueChange={(value) => setNewSavings({ ...newSavings, savingsType: value })}
-                >
-                  <SelectTrigger id="savings-type">
-                    <SelectValue placeholder="Select savings type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="emergency">Emergency Fund</SelectItem>
-                    <SelectItem value="vacation">Vacation</SelectItem>
-                    <SelectItem value="house">House Down Payment</SelectItem>
-                    <SelectItem value="retirement">Retirement</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="current-amount">Current Amount</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="current-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="1000.00"
-                      className="pl-7"
-                      value={newSavings.currentAmount}
-                      onChange={(e) => setNewSavings({ ...newSavings, currentAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="target-amount">Target Amount (optional)</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="target-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="10000.00"
-                      className="pl-7"
-                      value={newSavings.targetAmount}
-                      onChange={(e) => setNewSavings({ ...newSavings, targetAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="monthly-contribution">Monthly Contribution</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="monthly-contribution"
-                      type="number"
-                      step="0.01"
-                      placeholder="200.00"
-                      className="pl-7"
-                      value={newSavings.monthlyContribution}
-                      onChange={(e) => setNewSavings({ ...newSavings, monthlyContribution: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="target-date">Target Date (optional)</Label>
-                  <Input
-                    id="target-date"
-                    type="month"
-                    value={newSavings.targetDate}
-                    onChange={(e) => setNewSavings({ ...newSavings, targetDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddSavings(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddSavings}>Add Savings</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {selectedAccount && (
+        <TransactionDetails
+          isOpen={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+          title={`${selectedAccount.name} Transactions`}
+          description={`Current Balance: $${formatCurrency(selectedAccount.balance)} • Interest Rate: ${selectedAccount.interestRate}% APY`}
+          transactions={selectedAccount.transactions}
+          itemName={selectedAccount.name}
+          allowAddTransaction={true}
+          onAddTransaction={handleAddTransaction}
+          lastUpdated={selectedAccount.lastUpdated}
+          updateMethod={selectedAccount.updateMethod}
+        />
       )}
-
-      {showUpdateSavings && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Update Savings</CardTitle>
-            <CardDescription>Update your savings goal or account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="update-savings-name">Savings Name</Label>
-                <Input
-                  id="update-savings-name"
-                  placeholder="e.g., Emergency Fund"
-                  value={updateSavings.name}
-                  onChange={(e) => setUpdateSavings({ ...updateSavings, name: e.target.value })}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="update-savings-type">Savings Type</Label>
-                <Select
-                  value={updateSavings.savingsType}
-                  onValueChange={(value) => setUpdateSavings({ ...updateSavings, savingsType: value })}
-                >
-                  <SelectTrigger id="update-savings-type">
-                    <SelectValue placeholder="Select savings type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="emergency">Emergency Fund</SelectItem>
-                    <SelectItem value="vacation">Vacation</SelectItem>
-                    <SelectItem value="house">House Down Payment</SelectItem>
-                    <SelectItem value="retirement">Retirement</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="update-current-amount">Current Amount</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-current-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="1000.00"
-                      className="pl-7"
-                      value={updateSavings.currentAmount}
-                      onChange={(e) => setUpdateSavings({ ...updateSavings, currentAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="update-target-amount">Target Amount (optional)</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-target-amount"
-                      type="number"
-                      step="0.01"
-                      placeholder="10000.00"
-                      className="pl-7"
-                      value={updateSavings.targetAmount}
-                      onChange={(e) => setUpdateSavings({ ...updateSavings, targetAmount: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="update-monthly-contribution">Monthly Contribution</Label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                    <Input
-                      id="update-monthly-contribution"
-                      type="number"
-                      step="0.01"
-                      placeholder="200.00"
-                      className="pl-7"
-                      value={updateSavings.monthlyContribution}
-                      onChange={(e) => setUpdateSavings({ ...updateSavings, monthlyContribution: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="update-target-date">Target Date (optional)</Label>
-                  <Input
-                    id="update-target-date"
-                    type="month"
-                    value={updateSavings.targetDate}
-                    onChange={(e) => setUpdateSavings({ ...updateSavings, targetDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowUpdateSavings(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdateSavings}>Update Savings</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showAddFunds && selectedSavingsId && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Add Funds</CardTitle>
-            <CardDescription>
-              Add funds to {savingsAccounts.find((savings) => savings.id === selectedSavingsId)?.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="fund-amount">Amount to Add</Label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">$</span>
-                  <Input
-                    id="fund-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="500.00"
-                    className="pl-7"
-                    value={fundAmount}
-                    onChange={(e) => setFundAmount(e.target.value)}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Suggested amount: $
-                  {formatCurrency(
-                    savingsAccounts.find((savings) => savings.id === selectedSavingsId)?.monthlyContribution || 0,
-                  )}
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowAddFunds(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddFunds}>Add Funds</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        {savingsAccounts.map((account) => (
-          <Card key={account.id}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <account.icon className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg font-medium">{account.name}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${formatCurrency(account.currentAmount)}</div>
-              <p className="text-xs text-muted-foreground">
-                ${formatCurrency(account.monthlyContribution)}/month contribution
-              </p>
-
-              {account.targetAmount && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{Math.round((account.currentAmount / account.targetAmount) * 100)}%</span>
-                  </div>
-                  <Progress value={(account.currentAmount / account.targetAmount) * 100} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ${formatCurrency(account.currentAmount)} of ${formatCurrency(account.targetAmount)} goal
-                    {account.targetDate && ` • Target: ${account.targetDate}`}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-4 flex justify-between">
-                <Button size="sm" variant="outline" onClick={() => handleUpdateClick(account)}>
-                  Update
-                </Button>
-                <Button size="sm" onClick={() => handleAddFundsClick(account)}>
-                  Add Funds
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   )
 }

@@ -35,22 +35,27 @@ export function AddTransactionForm({ onComplete }: AddTransactionFormProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="transaction-type">Transaction Type</Label>
-          <RadioGroup id="transaction-type" defaultValue="expense" className="flex" onValueChange={setTransactionType}>
-            <div className="flex items-center space-x-2">
+          <RadioGroup
+            id="transaction-type"
+            defaultValue="expense"
+            className="flex flex-wrap"
+            onValueChange={setTransactionType}
+          >
+            <div className="flex items-center space-x-2 mr-4 mb-2 sm:mb-0">
               <RadioGroupItem value="expense" id="expense" />
-              <Label htmlFor="expense" className="cursor-pointer">
+              <Label htmlFor="expense" className="cursor-pointer text-sm">
                 Expense
               </Label>
             </div>
-            <div className="flex items-center space-x-2 ml-4">
+            <div className="flex items-center space-x-2 mr-4 mb-2 sm:mb-0">
               <RadioGroupItem value="income" id="income" />
-              <Label htmlFor="income" className="cursor-pointer">
+              <Label htmlFor="income" className="cursor-pointer text-sm">
                 Income
               </Label>
             </div>
-            <div className="flex items-center space-x-2 ml-4">
+            <div className="flex items-center space-x-2">
               <RadioGroupItem value="transfer" id="transfer" />
-              <Label htmlFor="transfer" className="cursor-pointer">
+              <Label htmlFor="transfer" className="cursor-pointer text-sm">
                 Transfer
               </Label>
             </div>
@@ -79,7 +84,7 @@ export function AddTransactionForm({ onComplete }: AddTransactionFormProps) {
                 {date ? format(date, "PPP") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="start">
               <Calendar mode="single" selected={date} onSelect={(date) => date && setDate(date)} initialFocus />
             </PopoverContent>
           </Popover>
@@ -164,11 +169,13 @@ export function AddTransactionForm({ onComplete }: AddTransactionFormProps) {
         )}
       </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onComplete}>
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
+        <Button type="button" variant="outline" onClick={onComplete} className="w-full sm:w-auto">
           Cancel
         </Button>
-        <Button type="submit">Save Transaction</Button>
+        <Button type="submit" className="w-full sm:w-auto">
+          Save Transaction
+        </Button>
       </div>
     </form>
   )

@@ -83,7 +83,7 @@ export function TimePeriodFilter({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 items-center">
+    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
       <div className="flex items-center">
         <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Time Period:</span>
@@ -91,11 +91,19 @@ export function TimePeriodFilter({
 
       <Tabs value={selectedPeriod} onValueChange={handlePeriodChange} className="w-full sm:w-auto">
         <TabsList className="grid grid-cols-4 sm:grid-cols-5 w-full sm:w-auto">
-          <TabsTrigger value="week">Week</TabsTrigger>
-          <TabsTrigger value="month">Month</TabsTrigger>
-          <TabsTrigger value="quarter">Quarter</TabsTrigger>
-          <TabsTrigger value="year">Year</TabsTrigger>
-          <TabsTrigger value="custom" className="hidden sm:block">
+          <TabsTrigger value="week" className="text-xs sm:text-sm">
+            Week
+          </TabsTrigger>
+          <TabsTrigger value="month" className="text-xs sm:text-sm">
+            Month
+          </TabsTrigger>
+          <TabsTrigger value="quarter" className="text-xs sm:text-sm">
+            Quarter
+          </TabsTrigger>
+          <TabsTrigger value="year" className="text-xs sm:text-sm">
+            Year
+          </TabsTrigger>
+          <TabsTrigger value="custom" className="hidden sm:block text-xs sm:text-sm">
             Custom
           </TabsTrigger>
         </TabsList>
@@ -106,7 +114,7 @@ export function TimePeriodFilter({
           <Button
             variant="outline"
             className={cn(
-              "justify-start text-left font-normal w-full sm:w-auto",
+              "justify-start text-left font-normal w-full sm:w-auto text-xs sm:text-sm",
               selectedPeriod !== "custom" && "text-muted-foreground",
             )}
           >
@@ -117,20 +125,37 @@ export function TimePeriodFilter({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="range"
-            defaultMonth={dateRange.from}
-            selected={{ from: dateRange.from, to: dateRange.to }}
-            onSelect={(range) => {
-              if (range?.from && range?.to) {
-                handleDateRangeChange(range)
-                setIsCalendarOpen(false)
-              }
-            }}
-            numberOfMonths={2}
-            initialFocus
-          />
-          <div className="flex items-center justify-between p-3 border-t">
+          <div className="flex flex-col sm:flex-row">
+            <Calendar
+              mode="range"
+              defaultMonth={dateRange.from}
+              selected={{ from: dateRange.from, to: dateRange.to }}
+              onSelect={(range) => {
+                if (range?.from && range?.to) {
+                  handleDateRangeChange(range)
+                  setIsCalendarOpen(false)
+                }
+              }}
+              numberOfMonths={1}
+              className="sm:hidden"
+              initialFocus
+            />
+            <Calendar
+              mode="range"
+              defaultMonth={dateRange.from}
+              selected={{ from: dateRange.from, to: dateRange.to }}
+              onSelect={(range) => {
+                if (range?.from && range?.to) {
+                  handleDateRangeChange(range)
+                  setIsCalendarOpen(false)
+                }
+              }}
+              numberOfMonths={2}
+              className="hidden sm:block"
+              initialFocus
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t gap-2">
             <Select
               onValueChange={(value) => {
                 const today = new Date()
@@ -160,7 +185,7 @@ export function TimePeriodFilter({
                 setIsCalendarOpen(false)
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Select range" />
               </SelectTrigger>
               <SelectContent>
@@ -171,7 +196,7 @@ export function TimePeriodFilter({
                 <SelectItem value="1year">Last year</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={() => setIsCalendarOpen(false)}>
+            <Button size="sm" onClick={() => setIsCalendarOpen(false)} className="w-full sm:w-auto">
               Apply
             </Button>
           </div>

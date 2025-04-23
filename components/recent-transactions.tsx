@@ -153,23 +153,23 @@ export function RecentTransactions({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6">
       {transactions.length > 0 ? (
         transactions.map((transaction) => (
           <div key={transaction.id} className="flex items-center">
-            <Avatar className="h-9 w-9 border">
-              <transaction.icon className="h-4 w-4" />
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border flex-shrink-0">
+              <transaction.icon className="h-3 w-3 sm:h-4 sm:w-4" />
             </Avatar>
-            <div className="ml-4 space-y-1">
-              <p className="text-sm font-medium leading-none">{transaction.description}</p>
-              <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
+            <div className="ml-3 sm:ml-4 space-y-0 sm:space-y-1 flex-grow min-w-0">
+              <p className="text-sm font-medium leading-none truncate">{transaction.description}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
             </div>
-            <div className="ml-auto font-medium">
+            <div className="ml-auto font-medium text-right flex-shrink-0">
               <span className={transaction.amount > 0 ? "text-green-500" : "text-red-500"}>
                 {transaction.amount > 0 ? "+" : ""}${formatCurrency(Math.abs(transaction.amount))}
               </span>
             </div>
-            <Badge variant="outline" className="ml-2">
+            <Badge variant="outline" className="ml-2 hidden sm:inline-flex text-xs whitespace-nowrap">
               {transaction.category}
             </Badge>
           </div>

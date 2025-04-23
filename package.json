@@ -59,7 +59,9 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "plaid": "latest",
-    "react-plaid-link": "latest"
+    "react-plaid-link": "latest",
+    "papaparse": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
