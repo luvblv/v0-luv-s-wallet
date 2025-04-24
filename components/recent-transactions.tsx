@@ -153,23 +153,25 @@ export function RecentTransactions({
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-2 sm:space-y-3 md:space-y-4">
       {transactions.length > 0 ? (
         transactions.map((transaction) => (
           <div key={transaction.id} className="flex items-center">
-            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border flex-shrink-0">
-              <transaction.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 border flex-shrink-0">
+              <transaction.icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
             </Avatar>
-            <div className="ml-3 sm:ml-4 space-y-0 sm:space-y-1 flex-grow min-w-0">
-              <p className="text-sm font-medium leading-none truncate">{transaction.description}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
+            <div className="ml-2 sm:ml-3 md:ml-4 space-y-0 sm:space-y-0.5 flex-grow min-w-0">
+              <p className="text-xs sm:text-sm font-medium leading-tight truncate">{transaction.description}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
             </div>
             <div className="ml-auto font-medium text-right flex-shrink-0">
               <span className={transaction.amount > 0 ? "text-green-500" : "text-red-500"}>
-                {transaction.amount > 0 ? "+" : ""}${formatCurrency(Math.abs(transaction.amount))}
+                <span className="text-xs sm:text-sm">
+                  {transaction.amount > 0 ? "+" : ""}${formatCurrency(Math.abs(transaction.amount))}
+                </span>
               </span>
             </div>
-            <Badge variant="outline" className="ml-2 hidden sm:inline-flex text-xs whitespace-nowrap">
+            <Badge variant="outline" className="ml-2 hidden xs:inline-flex text-[10px] sm:text-xs whitespace-nowrap">
               {transaction.category}
             </Badge>
           </div>

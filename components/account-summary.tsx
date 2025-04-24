@@ -281,6 +281,20 @@ export function AccountSummary() {
     console.log("Adding transaction:", transaction)
   }
 
+  const handleImportCsv = (data: any[], accountId: string) => {
+    console.log(`Importing ${data.length} transactions to account ${accountId}`)
+
+    // Find the account
+    const account = accounts.find((a) => a.id === accountId)
+    if (!account) {
+      console.error(`Account with ID ${accountId} not found`)
+      return
+    }
+
+    // In a real app, this would update the database
+    console.log(`Imported data for ${account.name}:`, data)
+  }
+
   const formatLastUpdated = (date: Date | string) => {
     if (typeof date === "string") {
       date = new Date(date)
@@ -338,14 +352,18 @@ export function AccountSummary() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[725px]">
                 <DialogHeader>
-                  <DialogTitle>Import Accounts from CSV</DialogTitle>
+                  <DialogTitle>Import Transactions from CSV</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
                   <CsvImporter
-                    onImport={(data) => {
-                      console.log("Imported data:", data)
-                      // Here you would process the imported data
-                    }}
+                    accounts={accounts.map((a) => ({
+                      id: a.id,
+                      name: a.name,
+                      type: a.type,
+                      accountNumber: a.accountNumber,
+                      institution: a.institution,
+                    }))}
+                    onImport={handleImportCsv}
                   />
                 </div>
               </DialogContent>
@@ -353,14 +371,14 @@ export function AccountSummary() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {accounts.map((account) => (
           <Card
             key={account.id}
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => handleAccountClick(account)}
           >
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-4">
               <CardTitle className="flex items-center justify-between">
                 <span>{account.name}</span>
                 <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -369,7 +387,7 @@ export function AccountSummary() {
                 {account.type} • {account.accountNumber}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
               <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
               <TooltipProvider>
                 <Tooltip>
@@ -386,7 +404,7 @@ export function AccountSummary() {
                 </Tooltip>
               </TooltipProvider>
             </CardContent>
-            <CardFooter className="pt-1">
+            <CardFooter className="pt-0 sm:pt-1 p-3 sm:p-4">
               <Button
                 variant="ghost"
                 size="sm"

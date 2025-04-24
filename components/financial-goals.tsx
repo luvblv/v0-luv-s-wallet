@@ -284,7 +284,7 @@ export function FinancialGoals() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {goals.map((goal) => {
           const percentComplete = (goal.currentAmount / goal.targetAmount) * 100
 
@@ -294,13 +294,13 @@ export function FinancialGoals() {
               className="cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => handleGoalClick(goal)}
             >
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-4">
                 <CardTitle>{goal.name}</CardTitle>
                 <CardDescription>
                   {goal.category} • Target: {goal.targetDate}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 pt-0 sm:pt-0">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Progress</span>
@@ -328,7 +328,7 @@ export function FinancialGoals() {
                   </Tooltip>
                 </TooltipProvider>
               </CardContent>
-              <CardFooter className="pt-1">
+              <CardFooter className="pt-0 sm:pt-1 p-3 sm:p-4">
                 <Button
                   variant="ghost"
                   size="sm"

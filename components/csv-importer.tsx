@@ -8,22 +8,49 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { FileUp, AlertCircle, Check, FileText } from "lucide-react"
+import { FileUp, AlertCircle, Check, FileText, CreditCard } from "lucide-react"
 import Papa from "papaparse"
 
-interface CsvImporterProps {
-  onImport: (data: any[]) => void
+interface Account {
+  id: string
+  name: string
+  type: string
+  accountNumber?: string
+  institution?: string
 }
 
-export function CsvImporter({ onImport }: CsvImporterProps) {
+interface CsvImporterProps {
+  onImport: (data: any[], accountId: string) => void
+  accounts?: Account[]
+}
+
+export function CsvImporter({ onImport, accounts = [] }: CsvImporterProps) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<any[]>([])
   const [mapping, setMapping] = useState<Record<string, string>>({})
   const [headers, setHeaders] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [importStep, setImportStep] = useState<"upload" | "map" | "confirm">("upload")
+  const [importStep, setImportStep] = useState<"upload" | "map" | "account" | "confirm">("upload")
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Default accounts if none are provided
+  const availableAccounts: Account[] =
+    accounts.length > 0
+      ? accounts
+      : [
+          { id: "1", name: "Main Checking", type: "Checking", accountNumber: "****4567", institution: "Chase Bank" },
+          { id: "2", name: "Savings", type: "Savings", accountNumber: "****7890", institution: "Chase Bank" },
+          { id: "3", name: "Credit Card", type: "Credit", accountNumber: "****1234", institution: "American Express" },
+          {
+            id: "4",
+            name: "Investment Account",
+            type: "Investment",
+            accountNumber: "****5678",
+            institution: "Vanguard",
+          },
+        ]
 
   const requiredFields = ["date", "description", "amount"]
   const fieldOptions = [
@@ -115,15 +142,22 @@ export function CsvImporter({ onImport }: CsvImporterProps) {
     }))
   }
 
-  const handleImport = () => {
-    if (!file) return
-
+  const handleContinueToAccountSelection = () => {
     // Check if all required fields are mapped
     const mappedFields = Object.values(mapping)
     const missingRequiredFields = requiredFields.filter((field) => !mappedFields.includes(field))
 
     if (missingRequiredFields.length > 0) {
       setError(`Missing required fields: ${missingRequiredFields.join(", ")}`)
+      return
+    }
+
+    setImportStep("account")
+  }
+
+  const handleImport = () => {
+    if (!file || !selectedAccountId) {
+      setError("Please select an account for these transactions")
       return
     }
 
@@ -161,7 +195,7 @@ export function CsvImporter({ onImport }: CsvImporterProps) {
           return transformedRow
         })
 
-        onImport(transformedData)
+        onImport(transformedData, selectedAccountId)
         setImportStep("confirm")
         setIsLoading(false)
       },
@@ -178,6 +212,7 @@ export function CsvImporter({ onImport }: CsvImporterProps) {
     setMapping({})
     setHeaders([])
     setError(null)
+    setSelectedAccountId("")
     setImportStep("upload")
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -290,7 +325,59 @@ export function CsvImporter({ onImport }: CsvImporterProps) {
             <Button variant="outline" onClick={resetImport} disabled={isLoading}>
               Cancel
             </Button>
-            <Button onClick={handleImport} disabled={isLoading}>
+            <Button onClick={handleContinueToAccountSelection} disabled={isLoading}>
+              {isLoading ? "Processing..." : "Continue"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {importStep === "account" && (
+        <div>
+          <div className="mb-6">
+            <h3 className="font-medium mb-2">Select Account</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose which account these transactions should be imported to
+            </p>
+
+            <div className="space-y-4">
+              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>
+                          {account.name} {account.accountNumber ? `(${account.accountNumber})` : ""}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {selectedAccountId && (
+                <div className="text-sm p-3 bg-muted rounded-md">
+                  <p className="font-medium">
+                    Selected Account: {availableAccounts.find((a) => a.id === selectedAccountId)?.name}
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    {availableAccounts.find((a) => a.id === selectedAccountId)?.institution} •{" "}
+                    {availableAccounts.find((a) => a.id === selectedAccountId)?.type}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+            <Button variant="outline" onClick={() => setImportStep("map")} disabled={isLoading}>
+              Back
+            </Button>
+            <Button onClick={handleImport} disabled={isLoading || !selectedAccountId}>
               {isLoading ? "Processing..." : "Import Data"}
             </Button>
           </div>
@@ -303,7 +390,11 @@ export function CsvImporter({ onImport }: CsvImporterProps) {
             <Check className="h-6 w-6 text-green-600" />
           </div>
           <h3 className="text-lg font-medium mb-2">Import Successful!</h3>
-          <p className="text-muted-foreground mb-6">Your data has been successfully imported.</p>
+          <p className="text-muted-foreground mb-2">
+            Your data has been successfully imported to{" "}
+            <span className="font-medium">{availableAccounts.find((a) => a.id === selectedAccountId)?.name}</span>
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">You can view these transactions in your account details.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Button onClick={resetImport}>Import Another File</Button>
           </div>

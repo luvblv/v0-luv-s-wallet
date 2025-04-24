@@ -290,7 +290,7 @@ export function SavingsOverview() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {savingsAccounts.map((account) => {
           const percentToGoal = account.goal ? (account.balance / account.goal) * 100 : 100
 
@@ -300,13 +300,13 @@ export function SavingsOverview() {
               className="cursor-pointer hover:shadow-md transition-shadow"
               onClick={() => handleAccountClick(account)}
             >
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-4">
                 <CardTitle>{account.name}</CardTitle>
                 <CardDescription>
                   {account.type} • {account.interestRate}% APY
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 pt-0 sm:pt-0">
                 <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
                 {account.goal && (
                   <div>
@@ -338,7 +338,7 @@ export function SavingsOverview() {
                   </Tooltip>
                 </TooltipProvider>
               </CardContent>
-              <CardFooter className="pt-1">
+              <CardFooter className="pt-0 sm:pt-1 p-3 sm:p-4">
                 <Button
                   variant="ghost"
                   size="sm"

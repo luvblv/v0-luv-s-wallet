@@ -49,8 +49,8 @@ export function MiniLineChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+    <ResponsiveContainer width="100%" height={height || "100%"}>
+      <LineChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
         {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />}
         {showAxis && (
           <XAxis dataKey="date" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickCount={getTickCount()} />

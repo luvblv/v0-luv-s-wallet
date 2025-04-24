@@ -252,11 +252,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container py-4 sm:py-6 px-4 sm:px-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
-        <Button onClick={() => setShowAddTransaction(!showAddTransaction)} className="w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
+    <div className="w-full max-w-[1400px] mx-auto py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6">
+      <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-3 sm:mb-4 md:mb-6 gap-3 sm:gap-4">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Dashboard</h1>
+        <Button onClick={() => setShowAddTransaction(!showAddTransaction)} className="w-full xs:w-auto">
+          <Plus className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
           Add Transaction
         </Button>
       </div>
@@ -321,12 +321,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             {/* Left side - Net Worth Value and Change */}
             <div>
               <div className="mb-4 sm:mb-6">
-                <h2 className="text-3xl sm:text-5xl font-bold flex items-center">
-                  ${hideNetWorth ? "••••••" : formatCurrency(currentNetWorth)}
+                <h2
+                  className={`text-3xl sm:text-5xl font-bold flex items-center ${!hideNetWorth && (currentNetWorth >= 0 ? "text-green-600" : "text-red-600")}`}
+                >
+                  {!hideNetWorth ? (
+                    <>
+                      {currentNetWorth >= 0 ? "+" : "-"}${formatCurrency(Math.abs(currentNetWorth))}
+                    </>
+                  ) : (
+                    "$••••••"
+                  )}
                 </h2>
               </div>
 
@@ -367,7 +375,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-4 sm:mb-6">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 xs:grid-cols-2 md:grid-cols-4 mb-3 sm:mb-4 md:mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
@@ -420,22 +428,24 @@ export default function DashboardPage() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start sm:justify-center">
-          <TabsTrigger value="overview" className="flex-shrink-0">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="accounts" className="flex-shrink-0">
-            Accounts
-          </TabsTrigger>
-          <TabsTrigger value="loans" className="flex-shrink-0">
-            Loans
-          </TabsTrigger>
-          <TabsTrigger value="savings" className="flex-shrink-0">
-            Savings
-          </TabsTrigger>
-          <TabsTrigger value="goals" className="flex-shrink-0">
-            Goals
-          </TabsTrigger>
+        <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start sm:justify-center p-0.5 h-auto">
+          <div className="flex min-w-full sm:min-w-0 px-1">
+            <TabsTrigger value="overview" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
+              Accounts
+            </TabsTrigger>
+            <TabsTrigger value="loans" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
+              Loans
+            </TabsTrigger>
+            <TabsTrigger value="savings" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
+              Savings
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
+              Goals
+            </TabsTrigger>
+          </div>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">

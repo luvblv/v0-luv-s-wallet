@@ -157,7 +157,7 @@ export function TransactionDetails({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-full sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-[85vw] md:max-w-[75vw] lg:max-w-[65vw] xl:max-w-[55vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">{title}</DialogTitle>
           {description && <DialogDescription className="text-sm">{description}</DialogDescription>}
@@ -328,33 +328,51 @@ export function TransactionDetails({
 
           <div className="overflow-auto flex-grow">
             <div className="min-w-full overflow-x-auto">
-              <Table>
+              <Table className="w-full text-xs sm:text-sm">
                 <TableHeader className="sticky top-0 bg-background">
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Date</TableHead>
-                    <TableHead className="whitespace-nowrap">Description</TableHead>
-                    <TableHead className="whitespace-nowrap">Category</TableHead>
-                    <TableHead className="whitespace-nowrap">Amount</TableHead>
-                    {showBalance && <TableHead className="whitespace-nowrap">Balance</TableHead>}
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap">Notes</TableHead>
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Date
+                    </TableHead>
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Description
+                    </TableHead>
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Category
+                    </TableHead>
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Amount
+                    </TableHead>
+                    {showBalance && (
+                      <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                        Balance
+                      </TableHead>
+                    )}
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-left py-2 px-2 sm:px-3 font-medium text-muted-foreground whitespace-nowrap">
+                      Notes
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedTransactions.length > 0 ? (
                     sortedTransactions.map((transaction) => (
                       <TableRow key={transaction.id}>
-                        <TableCell className="whitespace-nowrap">{formatDate(transaction.date)}</TableCell>
-                        <TableCell className="max-w-[150px] sm:max-w-none truncate">
+                        <TableCell className="py-2 px-2 sm:px-3 border-t whitespace-nowrap">
+                          {formatDate(transaction.date)}
+                        </TableCell>
+                        <TableCell className="py-2 px-2 sm:px-3 border-t max-w-[150px] sm:max-w-none truncate">
                           {transaction.description}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-2 px-2 sm:px-3 border-t">
                           <Badge variant="outline" className="whitespace-nowrap">
                             {transaction.category}
                           </Badge>
                         </TableCell>
                         <TableCell
-                          className={`whitespace-nowrap ${
+                          className={`py-2 px-2 sm:px-3 border-t whitespace-nowrap ${
                             transaction.type === "expense"
                               ? "text-red-600"
                               : transaction.type === "income"
@@ -366,11 +384,11 @@ export function TransactionDetails({
                           {formatCurrency(Math.abs(transaction.amount))}
                         </TableCell>
                         {showBalance && (
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="py-2 px-2 sm:px-3 border-t whitespace-nowrap">
                             ${formatCurrency(transaction.balance || 0)}
                           </TableCell>
                         )}
-                        <TableCell>
+                        <TableCell className="py-2 px-2 sm:px-3 border-t">
                           <Badge
                             variant="outline"
                             className={`whitespace-nowrap ${
@@ -386,7 +404,7 @@ export function TransactionDetails({
                             {transaction.status || "Completed"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[100px] sm:max-w-[200px] truncate">
+                        <TableCell className="py-2 px-2 sm:px-3 border-t max-w-[100px] sm:max-w-[200px] truncate">
                           {transaction.notes || "-"}
                         </TableCell>
                       </TableRow>
