@@ -16,6 +16,10 @@ const nextConfig = {
   },
   hostname: '0.0.0.0',
   port: 3000,
+  // Enable Speed Insights
+  speedInsights: {
+    enabled: true,
+  },
 }
 
 export default nextConfig
