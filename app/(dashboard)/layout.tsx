@@ -39,6 +39,9 @@ export default function DashboardLayout({
               {userName}'s Wallet
             </Link>
             <div className="hidden md:flex items-center space-x-1 sm:space-x-4">
+              <Link href="/budget" className="text-xs sm:text-sm px-2 py-1 rounded-md transition-colors hover:bg-muted">
+                Review Budget
+              </Link>
               <Link
                 href="/debt-calculator"
                 className="text-xs sm:text-sm px-2 py-1 rounded-md transition-colors hover:bg-muted"
@@ -86,6 +89,13 @@ export default function DashboardLayout({
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                  <Link
+                    href="/budget"
+                    className="text-sm px-2 py-2 rounded-md transition-colors hover:bg-muted"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Review Budget
                   </Link>
                   <Link
                     href="/debt-calculator"

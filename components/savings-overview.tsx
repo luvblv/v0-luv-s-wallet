@@ -362,7 +362,7 @@ export function SavingsOverview() {
           isOpen={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
           title={`${selectedAccount.name} Transactions`}
-          description={`Current Balance: $${formatCurrency(selectedAccount.balance)} • Interest Rate: ${selectedAccount.interestRate}% APY`}
+          description={`Current Balance: ${formatCurrency(selectedAccount.balance)} • Interest Rate: ${selectedAccount.interestRate}% APY`}
           transactions={selectedAccount.transactions}
           itemName={selectedAccount.name}
           allowAddTransaction={true}

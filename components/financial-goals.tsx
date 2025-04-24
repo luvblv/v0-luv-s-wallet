@@ -5,12 +5,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency } from "@/lib/utils"
-import { ArrowUpRight, Plus, RefreshCw, Clock, FileText } from "lucide-react"
+import { Plus, RefreshCw, Clock, FileText, ChevronUp, ChevronDown } from "lucide-react"
 import { type Transaction, TransactionDetails } from "./transaction-details"
 import { v4 as uuidv4 } from "uuid"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { formatDistanceToNow } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface Goal {
   id: string
@@ -27,9 +30,10 @@ interface Goal {
 export function FinancialGoals() {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
-
-  // Sample goals data
-  const goals: Goal[] = [
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
+  const [updateAmount, setUpdateAmount] = useState<string>("")
+  const [updateType, setUpdateType] = useState<"add" | "subtract">("add")
+  const [goals, setGoals] = useState<Goal[]>([
     {
       id: "1",
       name: "New Car",
@@ -216,16 +220,76 @@ export function FinancialGoals() {
         },
       ],
     },
-  ]
+  ])
 
   const handleGoalClick = (goal: Goal) => {
-    setSelectedGoal(goal)
-    setIsTransactionModalOpen(true)
+    if (editingGoalId !== goal.id) {
+      setSelectedGoal(goal)
+      setIsTransactionModalOpen(true)
+    }
   }
 
-  const handleAddTransaction = (transaction: Omit<Transaction, "id">) => {
+  const handleAddTransaction = (transaction: Omit<Transaction, "id">, goalId: string) => {
     // In a real app, this would update the database
     console.log("Adding transaction:", transaction)
+
+    // Update the goals state with the new transaction
+    setGoals((prevGoals) =>
+      prevGoals.map((goal) => {
+        if (goal.id === goalId) {
+          // Create a new transaction with ID
+          const newTransaction = {
+            ...transaction,
+            id: uuidv4(),
+          }
+
+          // Calculate new current amount
+          const newAmount =
+            transaction.type === "income"
+              ? goal.currentAmount + transaction.amount
+              : goal.currentAmount - transaction.amount
+
+          return {
+            ...goal,
+            currentAmount: newAmount,
+            lastUpdated: new Date(),
+            transactions: [newTransaction, ...goal.transactions],
+          }
+        }
+        return goal
+      }),
+    )
+  }
+
+  const handleUpdateGoal = (goalId: string) => {
+    const amount = Number.parseFloat(updateAmount)
+
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount greater than 0")
+      return
+    }
+
+    const goal = goals.find((g) => g.id === goalId)
+    if (!goal) return
+
+    // Create a transaction record
+    const transaction = {
+      date: new Date().toISOString().split("T")[0],
+      amount: updateType === "add" ? amount : amount,
+      description: updateType === "add" ? "Added to goal" : "Withdrawn from goal",
+      category: updateType === "add" ? "Deposit" : "Withdrawal",
+      type: updateType === "add" ? "income" : "expense",
+      status: "completed",
+      notes: `Manual ${updateType === "add" ? "contribution to" : "withdrawal from"} goal`,
+    }
+
+    // Add the transaction and update the goal
+    handleAddTransaction(transaction, goalId)
+
+    // Reset form
+    setUpdateAmount("")
+    setUpdateType("add")
+    setEditingGoalId(null)
   }
 
   const formatLastUpdated = (date: Date | string) => {
@@ -267,12 +331,13 @@ export function FinancialGoals() {
       <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {goals.map((goal) => {
           const percentComplete = (goal.currentAmount / goal.targetAmount) * 100
+          const isEditing = editingGoalId === goal.id
 
           return (
             <Card
               key={goal.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleGoalClick(goal)}
+              className={`hover:shadow-md transition-shadow ${isEditing ? "" : "cursor-pointer"}`}
+              onClick={isEditing ? undefined : () => handleGoalClick(goal)}
             >
               <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-4">
                 <CardTitle>{goal.name}</CardTitle>
@@ -307,6 +372,72 @@ export function FinancialGoals() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+
+                {isEditing && (
+                  <div className="mt-3 pt-3 border-t">
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor={`amount-${goal.id}`} className="text-sm">
+                          Amount
+                        </Label>
+                        <div className="relative mt-1">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+                            $
+                          </span>
+                          <Input
+                            id={`amount-${goal.id}`}
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="pl-7"
+                            value={updateAmount}
+                            onChange={(e) => setUpdateAmount(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm">Action</Label>
+                        <RadioGroup
+                          value={updateType}
+                          onValueChange={(value) => setUpdateType(value as "add" | "subtract")}
+                          className="flex gap-4 mt-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="add" id={`add-${goal.id}`} />
+                            <Label htmlFor={`add-${goal.id}`} className="text-sm cursor-pointer">
+                              Add
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="subtract" id={`subtract-${goal.id}`} />
+                            <Label htmlFor={`subtract-${goal.id}`} className="text-sm cursor-pointer">
+                              Subtract
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      <div className="flex gap-2 pt-1">
+                        <Button size="sm" className="flex-1" onClick={() => handleUpdateGoal(goal.id)}>
+                          Update
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setEditingGoalId(null)
+                            setUpdateAmount("")
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="pt-0 sm:pt-1 p-3 sm:p-4">
                 <Button
@@ -315,11 +446,21 @@ export function FinancialGoals() {
                   className="ml-auto"
                   onClick={(e) => {
                     e.stopPropagation() // Prevent opening the transaction modal
-                    console.log(`Add funds to ${goal.name}`)
+                    if (editingGoalId === goal.id) {
+                      setEditingGoalId(null)
+                    } else {
+                      setEditingGoalId(goal.id)
+                      setUpdateAmount("")
+                      setUpdateType("add")
+                    }
                   }}
                 >
-                  <span>Add Funds</span>
-                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                  <span>{editingGoalId === goal.id ? "Cancel" : "Update Goal"}</span>
+                  {editingGoalId === goal.id ? (
+                    <ChevronUp className="ml-2 h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  )}
                 </Button>
               </CardFooter>
             </Card>
@@ -332,11 +473,11 @@ export function FinancialGoals() {
           isOpen={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
           title={`${selectedGoal.name} Transactions`}
-          description={`Current Amount: $${formatCurrency(selectedGoal.currentAmount)} • Target: $${formatCurrency(selectedGoal.targetAmount)} by ${selectedGoal.targetDate}`}
+          description={`Current Amount: ${formatCurrency(selectedGoal.currentAmount)} • Target: ${formatCurrency(selectedGoal.targetAmount)} by ${selectedGoal.targetDate}`}
           transactions={selectedGoal.transactions}
           itemName={selectedGoal.name}
           allowAddTransaction={true}
-          onAddTransaction={handleAddTransaction}
+          onAddTransaction={(transaction) => handleAddTransaction(transaction, selectedGoal.id)}
           lastUpdated={selectedGoal.lastUpdated}
           updateMethod={selectedGoal.updateMethod}
         />

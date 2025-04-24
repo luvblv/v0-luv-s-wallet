@@ -387,10 +387,11 @@ export function AccountSummary() {
                 className="ml-auto"
                 onClick={(e) => {
                   e.stopPropagation() // Prevent opening the transaction modal
-                  console.log(`View details for ${account.name}`)
+                  setSelectedAccount(account)
+                  setIsTransactionModalOpen(true)
                 }}
               >
-                <span>View Details</span>
+                <span>View Transactions</span>
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>

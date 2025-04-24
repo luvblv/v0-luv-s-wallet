@@ -124,6 +124,27 @@ const initialSavingsAccounts = [
   },
 ]
 
+// Add a new component for financial affirmation quotes at the top of the dashboard
+
+// First, add this array of financial affirmation quotes after the initialSavingsAccounts array
+const financialAffirmations = [
+  "Money flows to me easily and effortlessly.",
+  "I am worthy of financial abundance and success.",
+  "My relationship with money improves every day.",
+  "I make smart decisions about money and investments.",
+  "I am in control of my financial future.",
+  "Every dollar I spend comes back to me multiplied.",
+  "I attract wealth and prosperity into my life.",
+  "My income increases constantly from multiple sources.",
+  "I deserve financial freedom and I'm achieving it daily.",
+  "My actions today create financial security for tomorrow.",
+  "I am grateful for the money I have and the money that's coming.",
+  "I manage my money wisely and with confidence.",
+  "Financial success is my natural state of being.",
+  "I release all negative beliefs about money.",
+  "My wealth grows while I sleep.",
+]
+
 export default function DashboardPage() {
   const [showAddTransaction, setShowAddTransaction] = useState(false)
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<TimePeriod>("month")
@@ -132,6 +153,9 @@ export default function DashboardPage() {
     to: endOfMonth(new Date()),
   })
   const [hideNetWorth, setHideNetWorth] = useState(false)
+
+  // Then, add this state for the current quote after the other useState declarations
+  const [currentQuote, setCurrentQuote] = useState<string>("")
 
   // State for financial data
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts)
@@ -144,6 +168,12 @@ export default function DashboardPage() {
   const [totalLiabilities, setTotalLiabilities] = useState(0)
   const [periodChange, setPeriodChange] = useState({ amount: 0, percentage: 0 })
   const [netWorthHistory, setNetWorthHistory] = useState<Array<{ value: number; date: string }>>([])
+
+  // Add this useEffect to select a random quote when the component mounts
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * financialAffirmations.length)
+    setCurrentQuote(financialAffirmations[randomIndex])
+  }, [])
 
   // Calculate net worth when financial data or time period changes
   useEffect(() => {
@@ -253,7 +283,33 @@ export default function DashboardPage() {
     <div className="w-full max-w-[1400px] mx-auto py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6">
       <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-3 sm:mb-4 md:mb-6 gap-3 sm:gap-4">
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Dashboard</h1>
+        <Button variant="default" size="sm" className="whitespace-nowrap bg-black text-white" asChild>
+          <Link href="/budget">Review Budget</Link>
+        </Button>
       </div>
+
+      {/* Now, add the quote display component after the dashboard title and before the spending cards */}
+      {/* Find this section: */}
+      {/* <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-3 sm:mb-4 md:mb-6 gap-3 sm:gap-4">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Dashboard</h1>
+        <Button variant="outline" size="sm" className="whitespace-nowrap" asChild>
+          <Link href="/budget">Review Budget</Link>
+        </Button>
+      </div> */}
+
+      {/* And add this after it: */}
+      <Card className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100">
+        <CardContent className="py-3 px-4">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 bg-white p-2 rounded-full">
+              <span className="text-blue-500 text-lg">💭</span>
+            </div>
+            <div>
+              <p className="text-sm sm:text-base italic text-blue-800">"{currentQuote}"</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Daily, Weekly, Monthly Spending Cards */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-3 mb-4 sm:mb-6">
