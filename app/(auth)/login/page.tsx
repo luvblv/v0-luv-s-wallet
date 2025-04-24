@@ -47,8 +47,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 p-4 sm:p-6">
-          <CardTitle className="text-xl sm:text-2xl font-bold">Welcome to Luv's Wallet</CardTitle>
-          <CardDescription className="text-sm">Enter your email and password to access your wallet</CardDescription>
+          <CardTitle className="text-xl sm:text-2xl font-bold">Welcome to Luv's Finance Tracker</CardTitle>
+          <CardDescription className="text-sm">Sign in to manage your finances</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
