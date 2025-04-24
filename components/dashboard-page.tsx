@@ -9,9 +9,7 @@ import { AccountSummary } from "@/components/account-summary"
 import { FinancialGoals } from "@/components/financial-goals"
 import { AddTransactionForm } from "@/components/add-transaction-form"
 import { Button } from "@/components/ui/button"
-import { Plus, Info, Eye, EyeOff, ExternalLink, BanknoteIcon as Bank } from "lucide-react"
-import { LoansOverview } from "@/components/loans-overview"
-import { SavingsOverview } from "@/components/savings-overview"
+import { Info, Eye, EyeOff, ExternalLink, BanknoteIcon as Bank } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { TimePeriodFilter, type TimePeriod, type DateRange } from "@/components/time-period-filter"
 import { startOfMonth, endOfMonth } from "date-fns"
@@ -255,10 +253,37 @@ export default function DashboardPage() {
     <div className="w-full max-w-[1400px] mx-auto py-3 sm:py-4 md:py-6 px-3 sm:px-4 md:px-6">
       <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-3 sm:mb-4 md:mb-6 gap-3 sm:gap-4">
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Dashboard</h1>
-        <Button onClick={() => setShowAddTransaction(!showAddTransaction)} className="w-full xs:w-auto">
-          <Plus className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          Add Transaction
-        </Button>
+      </div>
+
+      {/* Daily, Weekly, Monthly Spending Cards */}
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-3 mb-4 sm:mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium">What I Spent Today</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(85.42)}</div>
+            <p className="text-xs text-muted-foreground">{-12.5}% from yesterday</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium">What I Spent This Week</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(437.65)}</div>
+            <p className="text-xs text-muted-foreground">{+8.3}% from last week</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+            <CardTitle className="text-sm font-medium">What I Spent This Month</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(1842.3)}</div>
+            <p className="text-xs text-muted-foreground">{-3.7}% from last month</p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mb-4 sm:mb-6">
@@ -330,7 +355,8 @@ export default function DashboardPage() {
                 >
                   {!hideNetWorth ? (
                     <>
-                      {currentNetWorth >= 0 ? "+" : "-"}${formatCurrency(Math.abs(currentNetWorth))}
+                      {currentNetWorth >= 0 ? "+" : "-"}
+                      {formatCurrency(Math.abs(currentNetWorth))}
                     </>
                   ) : (
                     "$••••••"
@@ -343,19 +369,19 @@ export default function DashboardPage() {
                 <p
                   className={`text-xl sm:text-2xl font-bold ${periodChange.amount >= 0 ? "text-green-600" : "text-red-600"}`}
                 >
-                  {periodChange.amount >= 0 ? "+" : "-"}${formatCurrency(Math.abs(periodChange.amount))} (
-                  {periodChange.percentage}%)
+                  {periodChange.amount >= 0 ? "+" : "-"}
+                  {formatCurrency(Math.abs(periodChange.amount))} ({periodChange.percentage}%)
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Total Assets</p>
-                  <p className="font-medium">${hideNetWorth ? "••••••" : formatCurrency(totalAssets)}</p>
+                  <p className="font-medium">{hideNetWorth ? "$••••••" : formatCurrency(totalAssets)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Total Liabilities</p>
-                  <p className="font-medium">${hideNetWorth ? "••••••" : formatCurrency(totalLiabilities)}</p>
+                  <p className="font-medium">{hideNetWorth ? "$••••••" : formatCurrency(totalLiabilities)}</p>
                 </div>
               </div>
             </div>
@@ -381,9 +407,9 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.balance)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(summaryData.balance)}</div>
             <p className="text-xs text-muted-foreground">
-              +${formatCurrency(summaryData.changeBalance)} from last {selectedTimePeriod}
+              +{formatCurrency(summaryData.changeBalance)} from last {selectedTimePeriod}
             </p>
           </CardContent>
         </Card>
@@ -394,7 +420,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.income)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(summaryData.income)}</div>
             <p className="text-xs text-muted-foreground">
               +{summaryData.changeIncome}% from last {selectedTimePeriod}
             </p>
@@ -407,7 +433,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">${formatCurrency(summaryData.expenses)}</div>
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(summaryData.expenses)}</div>
             <p className="text-xs text-muted-foreground">
               +{summaryData.changeExpenses}% from last {selectedTimePeriod}
             </p>
@@ -435,12 +461,6 @@ export default function DashboardPage() {
             </TabsTrigger>
             <TabsTrigger value="accounts" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
               Accounts
-            </TabsTrigger>
-            <TabsTrigger value="loans" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
-              Loans
-            </TabsTrigger>
-            <TabsTrigger value="savings" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
-              Savings
             </TabsTrigger>
             <TabsTrigger value="goals" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3 py-1.5 h-auto">
               Goals
@@ -474,12 +494,6 @@ export default function DashboardPage() {
         </TabsContent>
         <TabsContent value="accounts" className="space-y-4">
           <AccountSummary />
-        </TabsContent>
-        <TabsContent value="loans" className="space-y-4">
-          <LoansOverview />
-        </TabsContent>
-        <TabsContent value="savings" className="space-y-4">
-          <SavingsOverview />
         </TabsContent>
         <TabsContent value="goals" className="space-y-4">
           <FinancialGoals />

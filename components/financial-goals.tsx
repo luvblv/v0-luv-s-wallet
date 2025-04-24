@@ -9,8 +9,6 @@ import { ArrowUpRight, Plus, RefreshCw, Clock, FileText } from "lucide-react"
 import { type Transaction, TransactionDetails } from "./transaction-details"
 import { v4 as uuidv4 } from "uuid"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CsvImporter } from "./csv-importer"
 import { formatDistanceToNow } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -263,24 +261,6 @@ export function FinancialGoals() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => console.log("Manual add goal")}>Add Goal Manually</DropdownMenuItem>
-            <Dialog>
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[725px]">
-                <DialogHeader>
-                  <DialogTitle>Import Goals from CSV</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <CsvImporter
-                    onImport={(data) => {
-                      console.log("Imported data:", data)
-                      // Here you would process the imported data
-                    }}
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -305,12 +285,12 @@ export function FinancialGoals() {
                   <div className="flex justify-between text-sm mb-1">
                     <span>Progress</span>
                     <span className="font-medium">
-                      ${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)}
+                      {formatCurrency(goal.currentAmount)} of {formatCurrency(goal.targetAmount)}
                     </span>
                   </div>
                   <Progress value={percentComplete} className="h-2" />
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>${formatCurrency(goal.targetAmount - goal.currentAmount)} to go</span>
+                    <span>{formatCurrency(goal.targetAmount - goal.currentAmount)} to go</span>
                     <span>{percentComplete.toFixed(0)}% Complete</span>
                   </div>
                 </div>

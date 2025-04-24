@@ -10,9 +10,9 @@ import { type Transaction, TransactionDetails } from "./transaction-details"
 import { v4 as uuidv4 } from "uuid"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CsvImporter } from "./csv-importer"
 import { formatDistanceToNow } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { PlaidLink } from "./plaid-link"
 
 interface Loan {
   id: string
@@ -247,17 +247,17 @@ export function LoansOverview() {
             <DropdownMenuItem onClick={() => console.log("Manual add loan")}>Add Loan Manually</DropdownMenuItem>
             <Dialog>
               <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Connect Bank (Plaid)</DropdownMenuItem>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[725px]">
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Import Loans from CSV</DialogTitle>
+                  <DialogTitle>Connect Bank Account</DialogTitle>
                 </DialogHeader>
                 <div className="py-4">
-                  <CsvImporter
-                    onImport={(data) => {
-                      console.log("Imported data:", data)
-                      // Here you would process the imported data
+                  <PlaidLink
+                    onSuccess={(accounts) => {
+                      console.log("Connected accounts:", accounts)
+                      // Here you would update your accounts state
                     }}
                   />
                 </div>
@@ -286,18 +286,18 @@ export function LoansOverview() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Balance</span>
-                    <span className="font-medium">${formatCurrency(loan.balance)}</span>
+                    <span className="font-medium">{formatCurrency(loan.balance)}</span>
                   </div>
                   <Progress value={percentPaid} className="h-2" />
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>Original: ${formatCurrency(loan.originalAmount)}</span>
+                    <span>Original: {formatCurrency(loan.originalAmount)}</span>
                     <span>{percentPaid.toFixed(0)}% Paid</span>
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Next Payment</span>
                   <span className="font-medium">
-                    ${formatCurrency(loan.minimumPayment)} • Due {loan.dueDate}
+                    {formatCurrency(loan.minimumPayment)} • Due {loan.dueDate}
                   </span>
                 </div>
                 <TooltipProvider>
@@ -339,7 +339,7 @@ export function LoansOverview() {
           isOpen={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
           title={`${selectedLoan.name} Transactions`}
-          description={`Current Balance: $${formatCurrency(selectedLoan.balance)} • Interest Rate: ${selectedLoan.interestRate}%`}
+          description={`Current Balance: ${formatCurrency(selectedLoan.balance)} • Interest Rate: ${selectedLoan.interestRate}%`}
           transactions={selectedLoan.transactions}
           itemName={selectedLoan.name}
           allowAddTransaction={true}

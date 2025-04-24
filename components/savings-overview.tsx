@@ -307,13 +307,13 @@ export function SavingsOverview() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 sm:space-y-3 md:space-y-4 p-3 sm:p-4 pt-0 sm:pt-0">
-                <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(account.balance)}</div>
                 {account.goal && (
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>Goal Progress</span>
                       <span className="font-medium">
-                        ${formatCurrency(account.balance)} of ${formatCurrency(account.goal)}
+                        {formatCurrency(account.balance)} of {formatCurrency(account.goal)}
                       </span>
                     </div>
                     <Progress value={percentToGoal} className="h-2" />

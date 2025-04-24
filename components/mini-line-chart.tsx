@@ -2,6 +2,7 @@
 
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 import { formatCurrency } from "@/lib/utils"
+import { ClientOnly } from "@/components/client-only"
 
 interface MiniLineChartProps {
   data: Array<{ value: number; date: string }>
@@ -49,23 +50,37 @@ export function MiniLineChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={height || "100%"}>
-      <LineChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />}
-        {showAxis && (
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickCount={getTickCount()} />
-        )}
-        {showAxis && <YAxis hide />}
-        <Tooltip content={<CustomTooltip />} />
-        <Line
-          type="monotone"
-          dataKey="value"
-          stroke={color}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 6, strokeWidth: 0 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <ClientOnly
+      fallback={
+        <div className="flex items-center justify-center h-full w-full bg-muted/20 rounded-md">
+          <p className="text-muted-foreground">Loading chart...</p>
+        </div>
+      }
+    >
+      <ResponsiveContainer width="100%" height={height || "100%"}>
+        <LineChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />}
+          {showAxis && (
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              tickCount={getTickCount()}
+            />
+          )}
+          {showAxis && <YAxis hide />}
+          <Tooltip content={<CustomTooltip />} />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 6, strokeWidth: 0 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </ClientOnly>
   )
 }

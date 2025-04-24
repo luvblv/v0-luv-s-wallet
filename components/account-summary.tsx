@@ -9,7 +9,6 @@ import { type Transaction, TransactionDetails } from "./transaction-details"
 import { v4 as uuidv4 } from "uuid"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CsvImporter } from "./csv-importer"
 import { PlaidLink } from "./plaid-link"
 import { formatDistanceToNow } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -327,10 +326,9 @@ export function AccountSummary() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => console.log("Manual add account")}>Add Account Manually</DropdownMenuItem>
             <Dialog>
               <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Connect Bank (Plaid)</DropdownMenuItem>
+                <DropdownMenuItem>Connect Bank (Plaid)</DropdownMenuItem>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -342,28 +340,6 @@ export function AccountSummary() {
                       console.log("Connected accounts:", accounts)
                       // Here you would update your accounts state
                     }}
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Dialog>
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Import from CSV</DropdownMenuItem>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[725px]">
-                <DialogHeader>
-                  <DialogTitle>Import Transactions from CSV</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <CsvImporter
-                    accounts={accounts.map((a) => ({
-                      id: a.id,
-                      name: a.name,
-                      type: a.type,
-                      accountNumber: a.accountNumber,
-                      institution: a.institution,
-                    }))}
-                    onImport={handleImportCsv}
                   />
                 </div>
               </DialogContent>
@@ -388,7 +364,7 @@ export function AccountSummary() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0 sm:pt-0">
-              <div className="text-2xl font-bold">${formatCurrency(account.balance)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(account.balance)}</div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -427,7 +403,7 @@ export function AccountSummary() {
           isOpen={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
           title={`${selectedAccount.name} Transactions`}
-          description={`Account ${selectedAccount.accountNumber} • Current Balance: $${formatCurrency(selectedAccount.balance)}`}
+          description={`Account ${selectedAccount.accountNumber} • Current Balance: ${formatCurrency(selectedAccount.balance)}`}
           transactions={selectedAccount.transactions}
           itemName={selectedAccount.name}
           showBalance={true}
