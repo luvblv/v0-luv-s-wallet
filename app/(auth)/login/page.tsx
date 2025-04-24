@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 p-4 sm:p-6">
-          <CardTitle className="text-xl sm:text-2xl font-bold">Access your wallet</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold">Welcome to Luv's Wallet</CardTitle>
           <CardDescription className="text-sm">Enter your email and password to access your wallet</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
