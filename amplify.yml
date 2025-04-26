@@ -6,9 +6,6 @@ frontend:
         - npm install
     build:
       commands:
-        - export NEXTAUTH_URL=https://main.d37zcu5wgybzql.amplifyapp.com
-        - export NEXTAUTH_SECRET=dEK+w5oe5LHb/Rs3CDUYuP/UkCdAuzLJNOVXgqpOYk8=
-        - export NEXT_PUBLIC_APP_URL=https://main.d37zcu5wgybzql.amplifyapp.com
         - npm run build
   artifacts:
     baseDirectory: .
