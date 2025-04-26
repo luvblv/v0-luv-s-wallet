@@ -8,17 +8,19 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
   },
-  reactStrictMode: true,
-  swcMinify: true,
-  experimental: {
-    serverActions: true,
-  },
-  hostname: '0.0.0.0',
-  port: 3000,
-  // Enable Speed Insights
-  speedInsights: {
-    enabled: true,
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
+    return config;
   },
 }
 

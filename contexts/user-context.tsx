@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
 
 type UserProfile = {
   name: string
@@ -17,7 +18,7 @@ type UserContextType = {
   updateProfile: (profile: Partial<UserProfile>) => void
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -25,33 +26,36 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState("Guest")
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === "authenticated"
 
-  // Check if user is authenticated on initial load
+  // Update user data when session changes
   useEffect(() => {
-    const storedAuth = localStorage.getItem("isAuthenticated")
-    const storedName = localStorage.getItem("userName")
-    const storedProfile = localStorage.getItem("userProfile")
-
-    if (storedAuth === "true") {
-      setIsAuthenticated(true)
-      if (storedName) {
-        setUserName(storedName)
-      }
-      if (storedProfile) {
-        try {
-          setUserProfile(JSON.parse(storedProfile))
-        } catch (e) {
-          console.error("Failed to parse stored profile")
-        }
-      }
-    } else if (pathname !== "/login" && pathname !== "/register" && !pathname.startsWith("/auth")) {
-      // Redirect to login if not authenticated and not on auth pages
-      router.push("/login")
+    if (session?.user) {
+      setUserName(session.user.name || "Guest")
+      setUserProfile({
+        name: session.user.name || "Guest",
+        email: session.user.email || "",
+      })
+    } else if (status === "unauthenticated") {
+      setUserName("Guest")
+      setUserProfile(null)
     }
-  }, [pathname, router])
+  }, [session, status])
+
+  // Handle authentication redirects
+  useEffect(() => {
+    if (status === "unauthenticated" && 
+        pathname !== "/login" && 
+        pathname !== "/register" && 
+        !pathname.startsWith("/auth")) {
+      router.push("/login")
+    } else if (status === "authenticated" && pathname === "/login") {
+      router.push("/dashboard")
+    }
+  }, [status, pathname, router])
 
   const login = async (email: string, password: string) => {
     // In a real app, this would validate credentials with an API
@@ -63,50 +67,39 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const formattedName = name.charAt(0).toUpperCase() + name.slice(1)
 
     setUserName(formattedName)
-    setIsAuthenticated(true)
-
-    // Create initial profile
-    const initialProfile = {
+    setUserProfile({
       name: formattedName,
       email: email,
-    }
-    setUserProfile(initialProfile)
-
-    // Store auth state in localStorage
-    localStorage.setItem("isAuthenticated", "true")
-    localStorage.setItem("userName", formattedName)
-    localStorage.setItem("userProfile", JSON.stringify(initialProfile))
+    })
   }
 
   const updateProfile = (profile: Partial<UserProfile>) => {
     setUserProfile((prev) => {
       const updated = { ...prev, ...profile } as UserProfile
-
-      // Update userName if name is changed
       if (profile.name) {
         setUserName(profile.name)
-        localStorage.setItem("userName", profile.name)
       }
-
-      // Store updated profile
-      localStorage.setItem("userProfile", JSON.stringify(updated))
-
       return updated
     })
   }
 
-  const logout = () => {
-    setIsAuthenticated(false)
+  const logout = async () => {
+    await signOut({ redirect: false })
     setUserName("Guest")
     setUserProfile(null)
+    router.push("/login")
+  }
 
-    // Clear auth state from localStorage
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("userName")
-    localStorage.removeItem("userProfile")
-
-    // Redirect to luvswallet.com instead of the login page
-    window.location.href = "https://luvswallet.com"
+  // Show loading state while loading the session
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Loading...</h1>
+          <p className="text-gray-600">Please wait while we check your authentication status.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
