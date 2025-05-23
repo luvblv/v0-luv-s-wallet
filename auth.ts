@@ -56,4 +56,4 @@ const handler = NextAuth({
   },
 })
 
-export default handler 
+export default handler
